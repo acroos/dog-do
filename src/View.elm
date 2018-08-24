@@ -1,5 +1,6 @@
 module View exposing (view)
 
+import DateUtils exposing (toIso8601String)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
@@ -15,7 +16,7 @@ view model =
         ]
 
 header : Html Msg
-header =
+header =    
     h1 [ class "display-2" ] [ text "dog-do" ]
 
 container : Html Msg -> Html Msg
@@ -41,11 +42,11 @@ events model =
 
 purchaseEventItem : PurchaseEvent -> Html Msg
 purchaseEventItem event =
-    li [] [ text ("[" ++ (toString event.date) ++ "] Purchased: " ++ event.name ++ " (" ++(toString event.quantity) ++ ")") ]
+    li [] [ text ("[" ++ (toIso8601String event.date) ++ "] Purchased: " ++ event.name ++ " (" ++(toString event.quantity) ++ ")") ]
 
 administerEventItem : AdministerEvent -> Html Msg
 administerEventItem event =
-    li [] [ text ("[" ++ (toString event.date) ++ "] Administered: " ++ event.name) ]
+    li [] [ text ("[" ++ (toIso8601String event.date) ++ "] Administered: " ++ event.name) ]
 
 foodColumn : Html Msg
 foodColumn =

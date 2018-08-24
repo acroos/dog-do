@@ -1,5 +1,6 @@
 module Update exposing (update)
 
+import Commands exposing (saveAdministerEvent, savePurchaseEvent)
 import Date exposing (Date)
 import Msgs exposing (Msg)
 import Models exposing (Model)
@@ -20,7 +21,7 @@ update msg model =
                     , date = date
                     }
             in
-                ( { model | purchaseEvents = (purchaseEvent :: model.purchaseEvents) }, Cmd.none )
+                ( { model | purchaseEvents = (purchaseEvent :: model.purchaseEvents) }, (savePurchaseEvent purchaseEvent) )
         Msgs.ReceiveAdministerEvent name date ->
             let
                 administerEvent =
@@ -28,4 +29,4 @@ update msg model =
                     , date = date
                     }
             in
-                ( { model | administerEvents = (administerEvent :: model.administerEvents) }, Cmd.none )
+                ( { model | administerEvents = (administerEvent :: model.administerEvents) }, (saveAdministerEvent administerEvent) )
