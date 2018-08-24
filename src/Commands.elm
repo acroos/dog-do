@@ -1,20 +1,10 @@
-module Commands exposing (saveAdministerEvent, savePurchaseEvent)
+module Commands exposing (saveEvent)
 
-import JsonUtils exposing (encodeAdminsterEvent, encodePurchaseEvent)
-import Models exposing (AdministerEvent, PurchaseEvent)
+import JsonUtils exposing (encodeEvent)
+import Models exposing (Event)
 import Msgs exposing (Msg)
 import Ports
 
-saveAdministerEvent : AdministerEvent -> Cmd Msg
-saveAdministerEvent event =
-    let
-        jsonValue = (encodeAdminsterEvent event)
-    in
-        Ports.storeAdministerEvent jsonValue
-
-savePurchaseEvent : PurchaseEvent -> Cmd Msg
-savePurchaseEvent event =
-    let
-        jsonValue = (encodePurchaseEvent event)
-    in
-        Ports.storePurchaseEvent jsonValue
+saveEvent : Event -> Cmd Msg
+saveEvent event =
+    Ports.saveEvent (encodeEvent event)

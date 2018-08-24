@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html exposing (Html)
 import Models exposing (Model, initialModel)
 import Msgs exposing (Msg)
+import Ports exposing (gotEventFromDatabase)
 import Update exposing (update)
 import View exposing (view)
 
@@ -14,7 +15,7 @@ init =
 
 subscriptions : Model -> Sub Msg
 subscriptions model = 
-    Sub.none
+    gotEventFromDatabase Msgs.GotEventFromDatabase
 
 
 ---- PROGRAM ----

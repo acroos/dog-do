@@ -1,6 +1,7 @@
-port module Ports exposing (storeAdministerEvent, storePurchaseEvent)
+port module Ports exposing (gotEventFromDatabase, saveEvent)
 
 import Json.Encode exposing (Value)
 
-port storeAdministerEvent : Value -> Cmd msg
-port storePurchaseEvent : Value -> Cmd msg
+port saveEvent : Value -> Cmd msg
+
+port gotEventFromDatabase : (Value -> msg) -> Sub msg

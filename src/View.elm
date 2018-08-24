@@ -1,18 +1,18 @@
 module View exposing (view)
 
-import DateUtils exposing (toIso8601String)
+import DateUtils exposing (toIso8601String, toPrettyString)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
-import Models exposing (Model, PurchaseEvent, AdministerEvent)
+import Models exposing (Model, Event, EventType, ItemType)
 import Msgs exposing (Msg)
 
 view : Model -> Html Msg
 view model =
     div []
-        [ header
-        , container columns
-        , container (events model)
+        [ text model.error
+        , header
+        , container (columns model.events)
         ]
 
 header : Html Msg
@@ -24,50 +24,69 @@ container body =
     div [ class "container" ]
         [ body ]
 
-columns : Html Msg
-columns = 
-    row [ foodColumn
-        , heartwormMedicineColumn
-        , fleaTickMedicineColumn
+columns : List Event -> Html Msg
+columns events = 
+    row [ foodColumn (List.filter (\e -> e.itemType == Models.Food) events)
+        , heartwormMedicineColumn (List.filter (\e -> e.itemType == Models.HeartwormMedicine) events)
+        , fleaTickMedicineColumn (List.filter (\e -> e.itemType == Models.FleaTickMedicine) events)
         ]
 
-events : Model -> Html Msg
-events model =
-    div []
-    [ ul []
-        (List.map purchaseEventItem model.purchaseEvents)
-    , ul []
-        (List.map administerEventItem model.administerEvents)
-    ]
-
-purchaseEventItem : PurchaseEvent -> Html Msg
-purchaseEventItem event =
-    li [] [ text ("[" ++ (toIso8601String event.date) ++ "] Purchased: " ++ event.name ++ " (" ++(toString event.quantity) ++ ")") ]
-
-administerEventItem : AdministerEvent -> Html Msg
-administerEventItem event =
-    li [] [ text ("[" ++ (toIso8601String event.date) ++ "] Administered: " ++ event.name) ]
-
-foodColumn : Html Msg
-foodColumn =
+foodColumn : List Event -> Html Msg
+foodColumn events =
     div [ class "col-sm" ]
         [ columnHeader "Food"
-        , (purchasedButton "Food" 1.0)
+        , eventList events
+        , (purchasedButton Models.Food "Orijen Six Fish" 1.0)
         ]
 
-heartwormMedicineColumn : Html Msg
-heartwormMedicineColumn =
+heartwormMedicineColumn : List Event -> Html Msg
+heartwormMedicineColumn events =
     div [ class "col-sm" ]
         [ columnHeader "Heartworm Medicine"
-        , (buttonRow "HeartwormMedicine")
+        , eventList events
+        , (buttonRow Models.HeartwormMedicine "Generic Brand")
         ]
 
-fleaTickMedicineColumn : Html Msg
-fleaTickMedicineColumn =
+fleaTickMedicineColumn : List Event -> Html Msg
+fleaTickMedicineColumn events =
     div [ class "col-sm" ]
         [ columnHeader "Flea/Tick Medicine"
-        , (buttonRow "FleaTickMedicine")
+        , eventList events
+        , (buttonRow Models.FleaTickMedicine "Generic Brand")
         ]
+
+eventList : List Event -> Html Msg
+eventList events =  
+    table [ class "table table-striped" ]
+        [ tbody [] (List.map eventItem events) ]
+
+eventItem : Event -> Html Msg
+eventItem event =
+    tr [] [ td [] [ text (eventText event) ] ]
+
+eventText : Event -> String
+eventText event =
+    let
+        quantityText = 
+            if event.quantity > 0 then
+                " " ++ (toString event.quantity)
+            else
+                ""
+    in
+        (toPrettyString event.timestamp)
+        ++ ": "
+        ++ (eventTypeToString event.eventType)
+        ++ " "
+        ++ quantityText
+        ++ " "
+        ++ event.itemName
+
+eventTypeToString : EventType -> String
+eventTypeToString eventType =
+    if eventType == Models.PurchaseEvent then
+        "Purchased"
+    else
+        "Adminstered"
 
 columnHeader : String -> Html Msg
 columnHeader title =
@@ -78,21 +97,21 @@ blockButton : String -> Msg -> Html Msg
 blockButton message clickMsg =
     button [ class "btn btn-primary btn-block", onClick clickMsg ] [ text message ]
 
-purchasedButton : String -> Float -> Html Msg
-purchasedButton name quantity =
-    blockButton "Purchased!" (Msgs.RequestPurchaseEvent name quantity) 
+purchasedButton : ItemType -> String -> Float -> Html Msg
+purchasedButton itemType name quantity =
+    blockButton "Purchased!" (Msgs.RequestPurchaseEvent itemType name quantity) 
 
-administeredButton : String -> Html Msg
-administeredButton name =
-    blockButton "Administered!" (Msgs.RequestAdministerEvent name)
+administeredButton : ItemType -> String -> Html Msg
+administeredButton itemType name =
+    blockButton "Administered!" (Msgs.RequestAdministerEvent itemType name)
 
 row :  List (Html Msg) -> Html Msg
 row columns =
     div [ class "row" ] columns
 
-buttonRow : String -> Html Msg
-buttonRow rowType =
+buttonRow : ItemType -> String -> Html Msg
+buttonRow itemType itemName =
     row 
-    [ div [ class "col-sm" ] [ (purchasedButton rowType 1.0) ]
-    , div [ class "col-sm" ] [ (administeredButton rowType) ]
+    [ div [ class "col-sm" ] [ (purchasedButton itemType itemName 1.0) ]
+    , div [ class "col-sm" ] [ (administeredButton itemType itemName) ]
     ]

@@ -1,18 +1,66 @@
-module DateUtils exposing (jsonEncodeDate, toIso8601String)
+module DateUtils exposing (toIso8601String, toPrettyString)
 
 import Date exposing (Date)
-import Json.Encode exposing (Value, string)
-
-jsonEncodeDate : Date -> Value
-jsonEncodeDate date =
-    string (toIso8601String date)
 
 toIso8601String : Date -> String
 toIso8601String date =
-    (toString (Date.year date)) ++ "-" ++ (toString (monthInt date)) ++ "-" ++ (toString (Date.day date))
+    let
+        dateArray = 
+            [ toString <| Date.year <| date
+            , "-"
+            , zeroPadInt2 <| extractMonthNum <| date
+            , "-"
+            , zeroPadInt2 <| Date.day <| date
+            , "T"
+            , zeroPadInt2 <| Date.hour <| date
+            , ":"
+            , zeroPadInt2 <| Date.minute <| date
+            , ":"
+            , zeroPadInt2 <| Date.second <| date
+            , "."
+            , zeroPadInt3 <| Date.millisecond <| date
+            ]
+    in
+        String.join "" dateArray
 
-monthInt : Date -> Int
-monthInt date =
+toPrettyString : Date -> String
+toPrettyString date =
+    (toString (Date.day date)) 
+    ++ " "
+    ++ (toString (Date.month date))
+    ++ " "
+    ++ (toString (Date.year date))
+
+zeroPadInt2 : Int -> String
+zeroPadInt2 num =
+    if num == 0 then
+        "00"
+    else if num < 10 then
+        "0" ++ (toString num)
+    else
+        toString num
+
+zeroPadInt3 : Int -> String
+zeroPadInt3 num =
+    if num < 10 then
+        "0" ++ (zeroPadInt2 num)
+    else if num < 100 then
+        "0" ++ (toString num)
+    else
+        toString num
+
+extractDayString : Date -> String
+extractDayString date =
+    let
+        dayNumber = Date.day date
+    in
+        if dayNumber < 10 then
+            "0" ++ (toString dayNumber)
+        else
+            (toString dayNumber)
+
+extractMonthNum : Date -> Int
+extractMonthNum date =
     let
         month = Date.month date
     in
