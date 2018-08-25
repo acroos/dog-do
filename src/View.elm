@@ -48,7 +48,7 @@ settingsPane visible =
                 "d-none"
     in
         
-    div [ class ("position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
+    div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
         [ settingsHeader
         , settingsForm
         ]
