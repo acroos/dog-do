@@ -10,3 +10,5 @@ type Msg
     | ReceivePurchaseEvent ItemType String Float Date
     | ReceiveAdministerEvent ItemType String Date
     | GotEventFromDatabase Value
+    | ToggleShowSettings
+    | SaveSettings

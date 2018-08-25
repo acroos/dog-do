@@ -35,3 +35,9 @@ update msg model =
                     ( { model | events = (val :: model.events) }, Cmd.none )
                 Err err ->
                     ( { model | error = err }, Cmd.none )
+
+        Msgs.ToggleShowSettings ->
+            ( { model | showSettings = not model.showSettings }, Cmd.none )
+
+        Msgs.SaveSettings ->
+            ( { model | showSettings = False }, Cmd.none )

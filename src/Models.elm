@@ -6,6 +6,7 @@ type alias Model =
     { dog : Dog
     , events : List Event
     , error : String
+    , showSettings : Bool
     }
 
 initialModel : Model
@@ -13,6 +14,7 @@ initialModel =
     { dog = { name = "Fido" }
     , events = []
     , error = ""
+    , showSettings = False
     }
 
 type EventType
