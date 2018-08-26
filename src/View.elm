@@ -2,18 +2,21 @@ module View exposing (view)
 
 import DateUtils exposing (toIso8601String, toPrettyString)
 import Html exposing (..)
-import Html.Attributes exposing (attribute, class, href, id, src, type_)
-import Html.Events exposing (onClick)
-import Models exposing (Model, Event, EventType, ItemType)
+import Html.Attributes exposing (..)
+import Html.Events exposing (on, onCheck, onClick, onInput, targetValue)
+import Json.Decode
+import Models exposing (Model, Event, EventType, ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Dog)
 import Msgs exposing (Msg)
 
 view : Model -> Html Msg
 view model =
     div []
-        [ settingsPane model.showSettings
+        [ text model.error
+        , settingsPane model.showSettings model.dog model.unitSystem model.defaultPurchases
         , settingsIcon
         , header
         , container (columns model.events)
+        , purchaseModal model.pendingEvent
         ]
 
 settingsIcon : Html Msg
@@ -38,8 +41,8 @@ container body =
     div [ class "container" ]
         [ body ]
 
-settingsPane : Bool -> Html Msg
-settingsPane visible =
+settingsPane : Bool -> Dog -> UnitSystem -> RememberedPurchases -> Html Msg
+settingsPane visible dog unitSystem defaults =
     let
         displayClass =
             if visible then
@@ -49,37 +52,141 @@ settingsPane visible =
     in
         
     div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
-        [ settingsHeader
-        , settingsForm
-        ]
+        [ settingsForm dog unitSystem defaults ]
 
-settingsHeader : Html Msg
-settingsHeader =
-    h3 [ class "text-primary text-center my-4" ] [ text "Settings" ]
-
-settingsForm : Html Msg
-settingsForm =
-    form [ class "text-left px-3" ]
-        [ div [ class "form-group" ]
-            [ label [ attribute "for" "dog-name" ] [ text "Dog Name:" ]
-            , input 
-                [ type_ "text"
-                , class "form-control"
-                , attribute "placeholder" "Fido"
-                , id "dog-name"
-                ] []
-            ]
-        , a 
-            [ class "btn btn-danger ml-2 float-right text-white"
-            , onClick Msgs.ToggleShowSettings
-            ] 
-            [ text "Cancel" ]
+settingsForm : Dog -> UnitSystem -> RememberedPurchases -> Html Msg
+settingsForm dog unitSystem defaults =
+    Html.form [ class "text-left px-3" ]
+        [ h2 [ class "text-primary text-center mt-4" ] [ text "Settings" ]
+        , dogInput dog
+        , unitSystemRadios unitSystem
+        , h2 [ class "text-primary text-center" ] [ text "Defaults:" ]
+        , settingsDefaultsFormGroup Models.Food defaults.food
+        , settingsDefaultsFormGroup Models.HeartwormMedicine defaults.heartwormMedicine
+        , settingsDefaultsFormGroup Models.FleaTickMedicine defaults.fleaTickMedicine
         , a 
             [ class "btn btn-success float-right text-white"
-            , onClick Msgs.SaveSettings
+            , onClick Msgs.ToggleShowSettings
             ] 
-            [ text "Save" ]
+            [ text "Done" ]
         ]
+
+dogInput : Dog -> Html Msg
+dogInput dog =
+    let
+        valueOrPlaceholder = 
+            if dog.name == "" then
+                (placeholder "Fido")
+            else
+                (value dog.name)
+        attrs = 
+            [ type_ "text"
+            , class "form-control"
+            , id "dogName"
+            , valueOrPlaceholder
+            ]
+    in
+        
+    div [ class "form-group" ]
+        [ label [ for "dogName" ] [ text "Dog Name:" ]
+        , input attrs []
+        ]
+
+unitSystemRadios : UnitSystem -> Html Msg
+unitSystemRadios unitSystem =
+    let
+        baseAttrs = 
+            [ class "form-check-input"
+            , type_ "radio"
+            , name "unitSystemRadios"
+            ]
+        
+        baseAttrsMetric = 
+            baseAttrs
+            |> List.append [ value "metric", onClick (Msgs.SettingsUpdateUnitSystem Models.Metric) ]
+
+        baseAttrsImperial =
+            baseAttrs
+            |> List.append [ value "imperial", onClick (Msgs.SettingsUpdateUnitSystem Models.Imperial) ]
+        
+        attrsMetric =
+            case unitSystem of
+                Models.Metric ->
+                    (attribute "checked" "") :: baseAttrs
+                Models.Imperial ->
+                    baseAttrs
+
+        attrsImperial =
+            case unitSystem of
+                Models.Metric ->
+                    baseAttrs
+                Models.Imperial ->
+                    (attribute "checked" "") :: baseAttrs
+    in
+        
+    div [ class "form-group" ]
+            [ label [] [ text "Unit System:"]
+            , div [ class "form-check" ]
+                [ input attrsMetric []
+                , label [ class "form-check-label", for "radioMetric" ]
+                    [ text "Metric (kgs)" ]
+                ]
+            , div [ class "form-check" ]
+                [ input attrsImperial []
+                , label [ class "form-check-label", for "radioImperial" ]
+                    [ text "Imperial (lbs)" ]
+                ]
+            ]
+
+settingsDefaultsFormGroup : ItemType -> Maybe RememberedPurchase -> Html Msg
+settingsDefaultsFormGroup itemType maybeRememberedPurchase =
+    let
+        nameLabel =
+            (itemTypeToString itemType) ++ " Name:"
+        nameValueOrPlaceholder =
+            case maybeRememberedPurchase of
+                Just purchase ->
+                    (value purchase.name)
+                Nothing ->
+                    (placeholder "The good stuff")
+        
+        quantityValueOrPlaceholder =
+            case maybeRememberedPurchase of
+                Just purchase ->
+                    (value (toString purchase.quantity))
+                Nothing ->
+                    (placeholder "1")
+
+        nameAttrs = 
+            [ type_ "text"
+            , class "form-control"
+            , id "itemName"
+            , onInput (Msgs.SettingsUpdateDefaultsName itemType) 
+            , nameValueOrPlaceholder
+            ]
+        
+        quantityAttrs =
+            [ type_ "text"
+            , class "form-control"
+            , id "itemQuantity"
+            , onFocusOut (Msgs.SettingsUpdateDefaultsQuantity itemType)
+            , quantityValueOrPlaceholder
+            ]
+    in
+        div [ ]
+            [ div [ class "form-group" ]
+                [ label [ for "itemName" ] [ text nameLabel ]
+                , input nameAttrs []
+                ]
+            , div [ class "form-group" ]
+                [ label [ for "itemQuantity" ] [ text "Quantity:"]
+                , input quantityAttrs []
+                ]
+            ]
+
+onFocusOut : (String -> msg) -> Attribute msg
+onFocusOut tagger =
+  on "focusout" (Json.Decode.map tagger targetValue)
 
 columns : List Event -> Html Msg
 columns events = 
@@ -177,22 +284,42 @@ eventTypeToString eventType =
     else
         "Adminstered"
 
+itemTypeToString : ItemType -> String
+itemTypeToString itemType =
+    case itemType of
+        Models.HeartwormMedicine ->
+            "Heartworm Medicine"
+        Models.FleaTickMedicine ->
+            "Flea/Tick Medicine"
+        Models.Food ->
+            "Food"
+
 columnHeader : String -> Html Msg
 columnHeader title =
     h2 [ class "text-center" ]
         [ text title ]
 
-blockButton : String -> Msg -> Html Msg
-blockButton message clickMsg =
-    button [ class "btn btn-primary btn-block", onClick clickMsg ] [ text message ]
+blockButton : String -> List (Attribute Msg) -> Msg -> Html Msg
+blockButton message attributes clickMsg =
+    let
+        buttonAttributes =
+            List.append attributes [ class "btn btn-primary btn-block", onClick clickMsg ]
+    in
+        button buttonAttributes [ text message ]
 
 purchasedButton : ItemType -> String -> Float -> Html Msg
 purchasedButton itemType name quantity =
-    blockButton "Purchased!" (Msgs.RequestPurchaseEvent itemType name quantity) 
+    let
+        buttonAttributes =
+            [ attribute "data-toggle" "modal" 
+            , attribute "data-target" "#purchaseModal"
+            ]
+    in
+        blockButton "Purchased!" buttonAttributes (Msgs.RequestPurchaseEvent itemType name quantity) 
 
 administeredButton : ItemType -> String -> Html Msg
 administeredButton itemType name =
-    blockButton "Administered!" (Msgs.RequestAdministerEvent itemType name)
+    blockButton "Administered!" [] (Msgs.RequestAdministerEvent itemType name)
 
 row :  List (Html Msg) -> Html Msg
 row columns =
@@ -204,3 +331,89 @@ buttonRow itemType itemName =
     [ div [ class "col-sm" ] [ (purchasedButton itemType itemName 1.0) ]
     , div [ class "col-sm" ] [ (administeredButton itemType itemName) ]
     ]
+
+purchaseModal : Maybe Event -> Html Msg
+purchaseModal event =
+    let
+        content = 
+            case event of
+                Just theEvent ->
+                    modalContent theEvent
+                Nothing ->
+                    [ div [] [] ]
+    in
+        div [ class "modal fade"
+            , id "purchaseModal"
+            , tabindex -1
+            , attribute "role" "dialog"
+            , attribute "aria-hidden" "true"
+            , attribute "aria-labelledby" "#purchaseModalLabel" ]
+            [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
+                [ div 
+                    [ class "modal-content" ] 
+                    content
+                ]
+            ]
+
+modalContent : Event -> List (Html Msg)
+modalContent event =
+        [ modalHeader event.itemType
+        , modalBody event
+        , div [ class "modal-footer" ]
+            [ button 
+                [ type_ "button"
+                , class "btn btn-secondary"
+                , onClick Msgs.DeletePendingEvent
+                , attribute "data-dismiss" "modal"
+                ]
+                [ text "Close" ]
+            , button 
+                [ type_ "button"
+                , class "btn btn-primary"
+                , onClick Msgs.SavePendingEvent
+                , attribute "data-dismiss" "modal"
+                ]
+                [ text "Save" ]
+            ]
+        ]
+
+modalHeader : ItemType -> Html Msg
+modalHeader itemType =
+    div [ class "modal-header" ]
+        [ h5 [ class "modal-title", id "purchaseModalLabel" ]
+            [ text ("Purchase " ++ (itemTypeToString itemType)) ]
+        , button 
+            [ type_ "button"
+            , class "close"
+            , attribute "data-dismiss" "modal"
+            , attribute "aria-label" "Close"
+            ]
+            [ span [ attribute "aria-hidden" "true" ] [ text "x" ] ]
+        ]
+
+modalBody : Event -> Html Msg
+modalBody event = 
+    div [ class "modal-body" ]
+        [ Html.form [ class "text-left px-3" ]
+            [ div [ class "form-group" ]
+                [ label [ for "itemName" ] [ text ((itemTypeToString event.itemType) ++ " Name:") ]
+                , input 
+                    [ type_ "text"
+                    , class "form-control"
+                    , value event.itemName
+                    , id "itemName"
+                    , onInput Msgs.UpdatePendingEventItemName
+                    ] []
+                ]
+            , div [ class "form-group" ]
+                [ label [ for "itemQuantity" ] [ text "Quantity:"]
+                , input
+                    [ type_ "text"
+                    , class "form-control"
+                    , value (toString event.quantity)
+                    , id "itemQuantity"
+                    , onFocusOut Msgs.UpdatePendingEventQuantity
+                    ] []
+                ]
+            ]
+        ]
