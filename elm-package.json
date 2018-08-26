@@ -2,6 +2,7 @@
     "version": "0.0.1",
     "summary": "A simple reminder application for all of your dog's necessities",
     "repository": "https://github.com/acroos/dog-do.git",
+    "homepage": "https://acroos.github.io/dog-do/",
     "license": "GPL-3.0-or-later",
     "source-directories": [
         "src"
