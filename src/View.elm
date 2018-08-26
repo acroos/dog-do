@@ -3,10 +3,12 @@ module View exposing (view)
 import DateUtils exposing (toIso8601String, toPrettyString)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (on, onCheck, onClick, onInput, targetValue)
-import Json.Decode
-import Models exposing (Model, Event, EventType, ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Dog)
+import Html.Events exposing (on, onClick)
+import Models exposing (Model, Event, EventType, ItemType, RememberedPurchase, RememberedPurchases)
 import Msgs exposing (Msg)
+import Utils.StringUtils exposing (..)
+import Views.PurchaseModal exposing (purchaseModal)
+import Views.Settings exposing (settingsPane)
 
 view : Model -> Html Msg
 view model =
@@ -15,7 +17,7 @@ view model =
         , settingsPane model.showSettings model.dog model.unitSystem model.defaultPurchases
         , settingsIcon
         , header
-        , container (columns model.events)
+        , container (columns model.events model.defaultPurchases model.lastPurchases)
         , purchaseModal model.pendingEvent
         ]
 
@@ -41,186 +43,82 @@ container body =
     div [ class "container" ]
         [ body ]
 
-settingsPane : Bool -> Dog -> UnitSystem -> RememberedPurchases -> Html Msg
-settingsPane visible dog unitSystem defaults =
-    let
-        displayClass =
-            if visible then
-                ""
-            else
-                "d-none"
-    in
-        
-    div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
-        [ settingsForm dog unitSystem defaults ]
-
-settingsForm : Dog -> UnitSystem -> RememberedPurchases -> Html Msg
-settingsForm dog unitSystem defaults =
-    Html.form [ class "text-left px-3" ]
-        [ h2 [ class "text-primary text-center mt-4" ] [ text "Settings" ]
-        , dogInput dog
-        , unitSystemRadios unitSystem
-        , h2 [ class "text-primary text-center" ] [ text "Defaults:" ]
-        , settingsDefaultsFormGroup Models.Food defaults.food
-        , settingsDefaultsFormGroup Models.HeartwormMedicine defaults.heartwormMedicine
-        , settingsDefaultsFormGroup Models.FleaTickMedicine defaults.fleaTickMedicine
-        , a 
-            [ class "btn btn-success float-right text-white"
-            , onClick Msgs.ToggleShowSettings
-            ] 
-            [ text "Done" ]
+columns : List Event -> RememberedPurchases -> RememberedPurchases -> Html Msg
+columns events defaults lasts = 
+    row [ foodColumn (List.filter (\e -> e.itemType == Models.Food) events) defaults.food lasts.food
+        , heartwormMedicineColumn (List.filter (\e -> e.itemType == Models.HeartwormMedicine) events) defaults.heartwormMedicine lasts.heartwormMedicine
+        , fleaTickMedicineColumn (List.filter (\e -> e.itemType == Models.FleaTickMedicine) events) defaults.fleaTickMedicine lasts.fleaTickMedicine
         ]
 
-dogInput : Dog -> Html Msg
-dogInput dog =
+foodColumn : List Event -> Maybe RememberedPurchase -> Maybe RememberedPurchase -> Html Msg
+foodColumn events maybeDefault maybeLast =
     let
-        valueOrPlaceholder = 
-            if dog.name == "" then
-                (placeholder "Fido")
-            else
-                (value dog.name)
-        attrs = 
-            [ type_ "text"
-            , class "form-control"
-            , id "dogName"
-            , valueOrPlaceholder
-            ]
+        name =
+            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
+        quantity = 
+            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
     in
-        
-    div [ class "form-group" ]
-        [ label [ for "dogName" ] [ text "Dog Name:" ]
-        , input attrs []
-        ]
-
-unitSystemRadios : UnitSystem -> Html Msg
-unitSystemRadios unitSystem =
-    let
-        baseAttrs = 
-            [ class "form-check-input"
-            , type_ "radio"
-            , name "unitSystemRadios"
+        div [ class "col" ]
+            [ columnHeader "Food"
+            , stock events
+            , (purchasedButton Models.Food name quantity)
+            , eventList events
             ]
-        
-        baseAttrsMetric = 
-            baseAttrs
-            |> List.append [ value "metric", onClick (Msgs.SettingsUpdateUnitSystem Models.Metric) ]
 
-        baseAttrsImperial =
-            baseAttrs
-            |> List.append [ value "imperial", onClick (Msgs.SettingsUpdateUnitSystem Models.Imperial) ]
-        
-        attrsMetric =
-            case unitSystem of
-                Models.Metric ->
-                    (attribute "checked" "") :: baseAttrs
-                Models.Imperial ->
-                    baseAttrs
-
-        attrsImperial =
-            case unitSystem of
-                Models.Metric ->
-                    baseAttrs
-                Models.Imperial ->
-                    (attribute "checked" "") :: baseAttrs
+heartwormMedicineColumn : List Event ->Maybe RememberedPurchase -> Maybe RememberedPurchase ->  Html Msg
+heartwormMedicineColumn events maybeDefault maybeLast =
+    let
+        name =
+            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
+        quantity = 
+            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
     in
-        
-    div [ class "form-group" ]
-            [ label [] [ text "Unit System:"]
-            , div [ class "form-check" ]
-                [ input attrsMetric []
-                , label [ class "form-check-label", for "radioMetric" ]
-                    [ text "Metric (kgs)" ]
-                ]
-            , div [ class "form-check" ]
-                [ input attrsImperial []
-                , label [ class "form-check-label", for "radioImperial" ]
-                    [ text "Imperial (lbs)" ]
-                ]
+        div [ class "col" ]
+            [ columnHeader "Heartworm Medicine"
+            , stock events
+            , (buttonRow Models.HeartwormMedicine name quantity)
+            , eventList events
             ]
 
-settingsDefaultsFormGroup : ItemType -> Maybe RememberedPurchase -> Html Msg
-settingsDefaultsFormGroup itemType maybeRememberedPurchase =
+fleaTickMedicineColumn : List Event ->Maybe RememberedPurchase -> Maybe RememberedPurchase ->  Html Msg
+fleaTickMedicineColumn events maybeDefault maybeLast =
     let
-        nameLabel =
-            (itemTypeToString itemType) ++ " Name:"
-        nameValueOrPlaceholder =
-            case maybeRememberedPurchase of
+        name =
+            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
+        quantity = 
+            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
+    in
+        div [ class "col" ]
+            [ columnHeader "Flea/Tick Medicine"
+            , stock events
+            , (buttonRow Models.FleaTickMedicine name quantity)
+            , eventList events
+            ]
+
+
+nameFromDefaultLastAndFallback : Maybe RememberedPurchase -> Maybe RememberedPurchase -> String -> String
+nameFromDefaultLastAndFallback default last fallback =
+    case default of
+        Just purchase ->
+            purchase.name
+        Nothing ->
+            case last of
                 Just purchase ->
-                    (value purchase.name)
+                    purchase.name
                 Nothing ->
-                    (placeholder "The good stuff")
-        
-        quantityValueOrPlaceholder =
-            case maybeRememberedPurchase of
+                    fallback
+
+quantityFromDefaultLastAndFallback : Maybe RememberedPurchase -> Maybe RememberedPurchase -> Float -> Float
+quantityFromDefaultLastAndFallback default last fallback =
+    case default of
+        Just purchase ->
+            purchase.quantity
+        Nothing ->
+            case last of
                 Just purchase ->
-                    (value (toString purchase.quantity))
+                    purchase.quantity
                 Nothing ->
-                    (placeholder "1")
-
-        nameAttrs = 
-            [ type_ "text"
-            , class "form-control"
-            , id "itemName"
-            , onInput (Msgs.SettingsUpdateDefaultsName itemType) 
-            , nameValueOrPlaceholder
-            ]
-        
-        quantityAttrs =
-            [ type_ "text"
-            , class "form-control"
-            , id "itemQuantity"
-            , onFocusOut (Msgs.SettingsUpdateDefaultsQuantity itemType)
-            , quantityValueOrPlaceholder
-            ]
-    in
-        div [ ]
-            [ div [ class "form-group" ]
-                [ label [ for "itemName" ] [ text nameLabel ]
-                , input nameAttrs []
-                ]
-            , div [ class "form-group" ]
-                [ label [ for "itemQuantity" ] [ text "Quantity:"]
-                , input quantityAttrs []
-                ]
-            ]
-
-onFocusOut : (String -> msg) -> Attribute msg
-onFocusOut tagger =
-  on "focusout" (Json.Decode.map tagger targetValue)
-
-columns : List Event -> Html Msg
-columns events = 
-    row [ foodColumn (List.filter (\e -> e.itemType == Models.Food) events)
-        , heartwormMedicineColumn (List.filter (\e -> e.itemType == Models.HeartwormMedicine) events)
-        , fleaTickMedicineColumn (List.filter (\e -> e.itemType == Models.FleaTickMedicine) events)
-        ]
-
-foodColumn : List Event -> Html Msg
-foodColumn events =
-    div [ class "col" ]
-        [ columnHeader "Food"
-        , stock events
-        , (purchasedButton Models.Food "Orijen Six Fish" 1.0)
-        , eventList events
-        ]
-
-heartwormMedicineColumn : List Event -> Html Msg
-heartwormMedicineColumn events =
-    div [ class "col" ]
-        [ columnHeader "Heartworm Medicine"
-        , stock events
-        , (buttonRow Models.HeartwormMedicine "Generic Brand")
-        , eventList events
-        ]
-
-fleaTickMedicineColumn : List Event -> Html Msg
-fleaTickMedicineColumn events =
-    div [ class "col" ]
-        [ columnHeader "Flea/Tick Medicine"
-        , stock events
-        , (buttonRow Models.FleaTickMedicine "Generic Brand")
-        , eventList events
-        ]
+                    fallback
 
 stock : List Event -> Html Msg
 stock events =
@@ -277,23 +175,6 @@ eventText event =
         ++ " "
         ++ event.itemName
 
-eventTypeToString : EventType -> String
-eventTypeToString eventType =
-    if eventType == Models.PurchaseEvent then
-        "Purchased"
-    else
-        "Adminstered"
-
-itemTypeToString : ItemType -> String
-itemTypeToString itemType =
-    case itemType of
-        Models.HeartwormMedicine ->
-            "Heartworm Medicine"
-        Models.FleaTickMedicine ->
-            "Flea/Tick Medicine"
-        Models.Food ->
-            "Food"
-
 columnHeader : String -> Html Msg
 columnHeader title =
     h2 [ class "text-center" ]
@@ -325,95 +206,9 @@ row :  List (Html Msg) -> Html Msg
 row columns =
     div [ class "row" ] columns
 
-buttonRow : ItemType -> String -> Html Msg
-buttonRow itemType itemName =
+buttonRow : ItemType -> String -> Float -> Html Msg
+buttonRow itemType itemName itemQuantity =
     row 
-    [ div [ class "col-sm" ] [ (purchasedButton itemType itemName 1.0) ]
+    [ div [ class "col-sm" ] [ (purchasedButton itemType itemName itemQuantity) ]
     , div [ class "col-sm" ] [ (administeredButton itemType itemName) ]
     ]
-
-purchaseModal : Maybe Event -> Html Msg
-purchaseModal event =
-    let
-        content = 
-            case event of
-                Just theEvent ->
-                    modalContent theEvent
-                Nothing ->
-                    [ div [] [] ]
-    in
-        div [ class "modal fade"
-            , id "purchaseModal"
-            , tabindex -1
-            , attribute "role" "dialog"
-            , attribute "aria-hidden" "true"
-            , attribute "aria-labelledby" "#purchaseModalLabel" ]
-            [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
-                [ div 
-                    [ class "modal-content" ] 
-                    content
-                ]
-            ]
-
-modalContent : Event -> List (Html Msg)
-modalContent event =
-        [ modalHeader event.itemType
-        , modalBody event
-        , div [ class "modal-footer" ]
-            [ button 
-                [ type_ "button"
-                , class "btn btn-secondary"
-                , onClick Msgs.DeletePendingEvent
-                , attribute "data-dismiss" "modal"
-                ]
-                [ text "Close" ]
-            , button 
-                [ type_ "button"
-                , class "btn btn-primary"
-                , onClick Msgs.SavePendingEvent
-                , attribute "data-dismiss" "modal"
-                ]
-                [ text "Save" ]
-            ]
-        ]
-
-modalHeader : ItemType -> Html Msg
-modalHeader itemType =
-    div [ class "modal-header" ]
-        [ h5 [ class "modal-title", id "purchaseModalLabel" ]
-            [ text ("Purchase " ++ (itemTypeToString itemType)) ]
-        , button 
-            [ type_ "button"
-            , class "close"
-            , attribute "data-dismiss" "modal"
-            , attribute "aria-label" "Close"
-            ]
-            [ span [ attribute "aria-hidden" "true" ] [ text "x" ] ]
-        ]
-
-modalBody : Event -> Html Msg
-modalBody event = 
-    div [ class "modal-body" ]
-        [ Html.form [ class "text-left px-3" ]
-            [ div [ class "form-group" ]
-                [ label [ for "itemName" ] [ text ((itemTypeToString event.itemType) ++ " Name:") ]
-                , input 
-                    [ type_ "text"
-                    , class "form-control"
-                    , value event.itemName
-                    , id "itemName"
-                    , onInput Msgs.UpdatePendingEventItemName
-                    ] []
-                ]
-            , div [ class "form-group" ]
-                [ label [ for "itemQuantity" ] [ text "Quantity:"]
-                , input
-                    [ type_ "text"
-                    , class "form-control"
-                    , value (toString event.quantity)
-                    , id "itemQuantity"
-                    , onFocusOut Msgs.UpdatePendingEventQuantity
-                    ] []
-                ]
-            ]
-        ]
