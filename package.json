@@ -7,10 +7,10 @@
   "author": "acroos <roos.austin@gmail.com>",
   "license": "GPL-3.0-or-later",
   "dependencies": {
-    "dexie": "^2.0.4",
-    "express": "^4.16.3"
+    "dexie": "^2.0.4"
   },
   "devDependencies": {
+    "create-elm-app": "^1.10.4",
     "elm": "^0.18.0"
   }
 }
