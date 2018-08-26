@@ -60,10 +60,16 @@ update msg model =
         Msgs.SavePendingEvent ->
             let
                 event = model.pendingEvent
+                lastPurchases = 
+                    case event of 
+                        Just theEvent ->
+                            updateLastPurchase model.lastPurchases theEvent.itemType { name = theEvent.itemName, quantity = theEvent.quantity }
+                        Nothing ->
+                            model.lastPurchases
             in
                 case event of
                     Just theEvent ->
-                        ( { model | pendingEvent = Nothing }, saveEvent theEvent )
+                        ( { model | pendingEvent = Nothing, lastPurchases = lastPurchases }, saveEvent theEvent )
                     Nothing ->
                         ( model, Cmd.none )
 
@@ -135,6 +141,16 @@ updateDefaults oldDefaults itemType newDefault =
             { oldDefaults | heartwormMedicine = Just newDefault }
         Models.FleaTickMedicine ->
             { oldDefaults | fleaTickMedicine = Just newDefault }
+
+updateLastPurchase : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
+updateLastPurchase oldLastPurchases itemType lastPurchase =
+    case itemType of
+        Models.Food ->
+            { oldLastPurchases | food = Just lastPurchase }
+        Models.HeartwormMedicine ->
+            { oldLastPurchases | heartwormMedicine = Just lastPurchase }
+        Models.FleaTickMedicine ->
+            { oldLastPurchases | fleaTickMedicine = Just lastPurchase }
 
 fetchDefaultPurchase : Model -> ItemType -> Maybe RememberedPurchase
 fetchDefaultPurchase model itemType =
