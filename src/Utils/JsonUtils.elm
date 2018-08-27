@@ -1,10 +1,10 @@
 module JsonUtils exposing (decodeEvent, encodeEvent)
 
 import Date exposing (Date)
-import DateUtils exposing (toIso8601String)
 import Json.Decode as Decode
 import Json.Encode exposing (Value, float, object, string)
 import Models exposing (Event, EventType, ItemType)
+import Utils.DateUtils exposing (toIso8601String)
 
 encodeEvent : Event -> Value
 encodeEvent event =

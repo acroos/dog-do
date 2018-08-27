@@ -4,10 +4,10 @@ import Char
 import Commands exposing (saveEvent)
 import Date exposing (Date)
 import Json.Decode as Decode
-import JsonUtils exposing (decodeEvent)
 import Msgs exposing (Msg)
 import Models exposing (..)
 import Task exposing (Task)
+import Utils.JsonUtils exposing (decodeEvent)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =

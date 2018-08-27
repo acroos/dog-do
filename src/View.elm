@@ -1,11 +1,11 @@
 module View exposing (view)
 
-import DateUtils exposing (toIso8601String, toPrettyString)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (on, onClick)
 import Models exposing (Model, Event, EventType, ItemType, RememberedPurchase, RememberedPurchases)
 import Msgs exposing (Msg)
+import Utils.DateUtils exposing (toIso8601String, toPrettyString)
 import Utils.StringUtils exposing (..)
 import Views.PurchaseModal exposing (purchaseModal)
 import Views.Settings exposing (settingsPane)
