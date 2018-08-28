@@ -1,13 +1,13 @@
 module Update exposing (update)
 
 import Char
-import Commands exposing (saveEvent)
+import Commands exposing (..)
 import Date exposing (Date)
 import Json.Decode as Decode
 import Msgs exposing (Msg)
 import Models exposing (..)
 import Task exposing (Task)
-import Utils.JsonUtils exposing (decodeEvent)
+import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -63,7 +63,11 @@ update msg model =
                 lastPurchases = 
                     case event of 
                         Just theEvent ->
-                            updateLastPurchase model.lastPurchases theEvent.itemType { name = theEvent.itemName, quantity = theEvent.quantity }
+                            updateLastPurchase model.lastPurchases 
+                                            theEvent.itemType 
+                                            { name = Just theEvent.itemName
+                                            , quantity = Just theEvent.quantity
+                                            }
                         Nothing ->
                             model.lastPurchases
             in
@@ -73,30 +77,42 @@ update msg model =
                     Nothing ->
                         ( model, Cmd.none )
 
+        Msgs.GotDogName name ->
+            ( { model | dog = { name = Just name } }, Cmd.none )
+
+        Msgs.GotUnitSystem systemString ->
+            ( { model | unitSystem = (unitSystemFromString systemString) }, Cmd.none )
+
+        Msgs.GotDefaults value ->
+            case Decode.decodeValue decodeRememberedPurchases value of
+                Ok defaults ->
+                    ( { model | defaultPurchases = defaults }, Cmd.none )
+                Err err ->
+                    ( { model | error = ("GotDefaults: " ++ err) }, Cmd.none )
+
         Msgs.GotEventFromDatabase event ->
             case Decode.decodeValue decodeEvent event of
                 Ok val ->
                     ( { model | events = (val :: model.events) }, Cmd.none )
                 Err err ->
-                    ( { model | error = err }, Cmd.none )
+                    ( { model | error = ("GotEventFromDatabase: " ++ err) }, Cmd.none )
 
         Msgs.ToggleShowSettings ->
             ( { model | showSettings = not model.showSettings }, Cmd.none )
 
+        Msgs.SettingsUpdateDogName dogName ->
+            ( { model | dog = { name = Just dogName } }, (saveDogName dogName) )
+
         Msgs.SettingsUpdateUnitSystem unitSystem ->
-            ( { model | unitSystem = unitSystem }, Cmd.none )
+            ( { model | unitSystem = unitSystem }, (saveUnitSystem unitSystem) )
 
         Msgs.SettingsUpdateDefaultsName itemType name ->
             let
-                maybeDefault =
+                default =
                     fetchDefaultPurchase model itemType
                 
-                updatedDefault = 
-                    case maybeDefault of
-                        Just purchase ->
-                            { purchase | name = name }
-                        Nothing ->
-                            { name = name, quantity = 1.0 }
+                updatedDefault =
+                    { default | name = Just name }
 
                 oldDefaults = 
                     model.defaultPurchases
@@ -104,25 +120,21 @@ update msg model =
                 newDefaults =
                     updateDefaults oldDefaults itemType updatedDefault
             in
-                ( { model | defaultPurchases = newDefaults }, Cmd.none )
+                ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
 
         Msgs.SettingsUpdateDefaultsQuantity itemType quantityString ->
             let
-                maybeDefault =
+                default =
                     fetchDefaultPurchase model itemType
                 
                 strippedString =
                     String.filter isDigitOrDecimal quantityString
 
                 newQuantity =
-                    stringToFloatWithDefault quantityString 1.0
+                    stringToFloatWithDefault quantityString 0.0
 
                 updatedDefault = 
-                    case maybeDefault of
-                        Just purchase ->
-                            { purchase | quantity = newQuantity }
-                        Nothing ->
-                            { name = "", quantity = newQuantity }
+                    { default | quantity = Just newQuantity }
 
                 oldDefaults = 
                     model.defaultPurchases
@@ -130,29 +142,29 @@ update msg model =
                 newDefaults =
                     updateDefaults oldDefaults itemType updatedDefault
             in
-                ( { model | defaultPurchases = newDefaults }, Cmd.none )
+                ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
 
 updateDefaults : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
 updateDefaults oldDefaults itemType newDefault =
     case itemType of
         Models.Food ->
-            { oldDefaults | food = Just newDefault }
+            { oldDefaults | food = newDefault }
         Models.HeartwormMedicine ->
-            { oldDefaults | heartwormMedicine = Just newDefault }
+            { oldDefaults | heartwormMedicine = newDefault }
         Models.FleaTickMedicine ->
-            { oldDefaults | fleaTickMedicine = Just newDefault }
+            { oldDefaults | fleaTickMedicine = newDefault }
 
 updateLastPurchase : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
 updateLastPurchase oldLastPurchases itemType lastPurchase =
     case itemType of
         Models.Food ->
-            { oldLastPurchases | food = Just lastPurchase }
+            { oldLastPurchases | food = lastPurchase }
         Models.HeartwormMedicine ->
-            { oldLastPurchases | heartwormMedicine = Just lastPurchase }
+            { oldLastPurchases | heartwormMedicine = lastPurchase }
         Models.FleaTickMedicine ->
-            { oldLastPurchases | fleaTickMedicine = Just lastPurchase }
+            { oldLastPurchases | fleaTickMedicine = lastPurchase }
 
-fetchDefaultPurchase : Model -> ItemType -> Maybe RememberedPurchase
+fetchDefaultPurchase : Model -> ItemType -> RememberedPurchase
 fetchDefaultPurchase model itemType =
     case itemType of
         Models.Food ->
@@ -161,6 +173,13 @@ fetchDefaultPurchase model itemType =
             model.defaultPurchases.heartwormMedicine
         Models.FleaTickMedicine ->
             model.defaultPurchases.fleaTickMedicine
+
+unitSystemFromString : String -> UnitSystem
+unitSystemFromString string =
+    if string == (toString Models.Imperial) then
+        Models.Imperial
+    else
+        Models.Metric
 
 quantityFloatFromStringWithEventDefault : String -> Maybe Event -> Float
 quantityFloatFromStringWithEventDefault quantityString maybeEvent =

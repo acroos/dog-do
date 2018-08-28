@@ -45,78 +45,52 @@ container body =
 
 columns : List Event -> RememberedPurchases -> RememberedPurchases -> Html Msg
 columns events defaults lasts = 
-    row [ foodColumn (List.filter (\e -> e.itemType == Models.Food) events) defaults.food lasts.food
-        , heartwormMedicineColumn (List.filter (\e -> e.itemType == Models.HeartwormMedicine) events) defaults.heartwormMedicine lasts.heartwormMedicine
-        , fleaTickMedicineColumn (List.filter (\e -> e.itemType == Models.FleaTickMedicine) events) defaults.fleaTickMedicine lasts.fleaTickMedicine
+    row [ genericColumn Models.Food events defaults.food lasts.food
+        , genericColumn Models.HeartwormMedicine events defaults.heartwormMedicine lasts.heartwormMedicine
+        , genericColumn Models.FleaTickMedicine events defaults.fleaTickMedicine lasts.fleaTickMedicine
         ]
 
-foodColumn : List Event -> Maybe RememberedPurchase -> Maybe RememberedPurchase -> Html Msg
-foodColumn events maybeDefault maybeLast =
+genericColumn : ItemType -> List Event -> RememberedPurchase -> RememberedPurchase -> Html Msg
+genericColumn itemType allEvents default last =
     let
+        header =
+            headerTextFromItemType itemType
         name =
-            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
+            nameFromDefaultAndLast default.name last.name
         quantity = 
-            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
+            quantityFromDefaultAndLast default.quantity last.quantity
+        events =
+            List.filter (\e -> e.itemType == itemType) allEvents
+        buttons =
+            if itemType == Models.Food then
+                purchasedButton itemType name quantity
+            else
+                buttonRow itemType name quantity
     in
         div [ class "col" ]
-            [ columnHeader "Food"
+            [ columnHeader header
             , stock events
-            , (purchasedButton Models.Food name quantity)
+            , buttons
             , eventList events
             ]
 
-heartwormMedicineColumn : List Event ->Maybe RememberedPurchase -> Maybe RememberedPurchase ->  Html Msg
-heartwormMedicineColumn events maybeDefault maybeLast =
-    let
-        name =
-            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
-        quantity = 
-            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
-    in
-        div [ class "col" ]
-            [ columnHeader "Heartworm Medicine"
-            , stock events
-            , (buttonRow Models.HeartwormMedicine name quantity)
-            , eventList events
-            ]
+nameFromDefaultAndLast : Maybe String -> Maybe String -> String
+nameFromDefaultAndLast default last =
+    valueFromDefaultLastAndFallback default last "Generic Brand"
 
-fleaTickMedicineColumn : List Event ->Maybe RememberedPurchase -> Maybe RememberedPurchase ->  Html Msg
-fleaTickMedicineColumn events maybeDefault maybeLast =
-    let
-        name =
-            nameFromDefaultLastAndFallback maybeDefault maybeLast "Generic Brand"
-        quantity = 
-            quantityFromDefaultLastAndFallback maybeDefault maybeLast 1.0
-    in
-        div [ class "col" ]
-            [ columnHeader "Flea/Tick Medicine"
-            , stock events
-            , (buttonRow Models.FleaTickMedicine name quantity)
-            , eventList events
-            ]
+quantityFromDefaultAndLast : Maybe Float -> Maybe Float -> Float
+quantityFromDefaultAndLast default last =
+    valueFromDefaultLastAndFallback default last 1.0
 
-
-nameFromDefaultLastAndFallback : Maybe RememberedPurchase -> Maybe RememberedPurchase -> String -> String
-nameFromDefaultLastAndFallback default last fallback =
+valueFromDefaultLastAndFallback : Maybe a -> Maybe a -> a -> a
+valueFromDefaultLastAndFallback default last fallback =
     case default of
-        Just purchase ->
-            purchase.name
+        Just val ->
+            val
         Nothing ->
             case last of
-                Just purchase ->
-                    purchase.name
-                Nothing ->
-                    fallback
-
-quantityFromDefaultLastAndFallback : Maybe RememberedPurchase -> Maybe RememberedPurchase -> Float -> Float
-quantityFromDefaultLastAndFallback default last fallback =
-    case default of
-        Just purchase ->
-            purchase.quantity
-        Nothing ->
-            case last of
-                Just purchase ->
-                    purchase.quantity
+                Just val ->
+                    val
                 Nothing ->
                     fallback
 
@@ -212,3 +186,13 @@ buttonRow itemType itemName itemQuantity =
     [ div [ class "col-sm" ] [ (purchasedButton itemType itemName itemQuantity) ]
     , div [ class "col-sm" ] [ (administeredButton itemType itemName) ]
     ]
+
+headerTextFromItemType : ItemType -> String
+headerTextFromItemType itemType =
+    case itemType of
+        Models.Food ->
+            "Food"
+        Models.HeartwormMedicine ->
+            "Heartworm Medicine"
+        Models.FleaTickMedicine ->
+            "Flea/Tick Medicine"

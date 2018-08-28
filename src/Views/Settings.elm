@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Models exposing (ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Dog)
 import Msgs exposing (Msg)
-import Utils.HtmlUtils exposing (onFocusOut)
+import Utils.HtmlUtils exposing (onChange, onFocusOut)
 import Utils.StringUtils exposing (itemTypeToString)
 
 settingsPane : Bool -> Dog -> UnitSystem -> RememberedPurchases -> Html Msg
@@ -28,9 +28,9 @@ settingsForm dog unitSystem defaults =
         , dogInput dog
         , unitSystemRadios unitSystem
         , h2 [ class "text-primary text-center" ] [ text "Defaults:" ]
-        , settingsDefaultsFormGroup Models.Food defaults.food
-        , settingsDefaultsFormGroup Models.HeartwormMedicine defaults.heartwormMedicine
-        , settingsDefaultsFormGroup Models.FleaTickMedicine defaults.fleaTickMedicine
+        , settingsDefaultsFormGroup Models.Food unitSystem defaults.food
+        , settingsDefaultsFormGroup Models.HeartwormMedicine unitSystem defaults.heartwormMedicine
+        , settingsDefaultsFormGroup Models.FleaTickMedicine unitSystem defaults.fleaTickMedicine
         , a 
             [ class "btn btn-success float-right text-white"
             , onClick Msgs.ToggleShowSettings
@@ -42,15 +42,17 @@ dogInput : Dog -> Html Msg
 dogInput dog =
     let
         valueOrPlaceholder = 
-            if dog.name == "" then
-                (placeholder "Fido")
-            else
-                (value dog.name)
+            case dog.name of
+                Just name ->
+                    value name
+                Nothing ->
+                    placeholder "Fido"
         attrs = 
             [ type_ "text"
             , class "form-control"
             , id "dogName"
             , valueOrPlaceholder
+            , onFocusOut Msgs.SettingsUpdateDogName
             ]
     in
         
@@ -79,16 +81,16 @@ unitSystemRadios unitSystem =
         attrsMetric =
             case unitSystem of
                 Models.Metric ->
-                    (attribute "checked" "") :: baseAttrs
+                    (attribute "checked" "") :: baseAttrsMetric
                 Models.Imperial ->
-                    baseAttrs
+                    baseAttrsMetric
 
         attrsImperial =
             case unitSystem of
                 Models.Metric ->
-                    baseAttrs
+                    baseAttrsImperial
                 Models.Imperial ->
-                    (attribute "checked" "") :: baseAttrs
+                    (attribute "checked" "") :: baseAttrsImperial
     in
         
     div [ class "form-group" ]
@@ -105,30 +107,40 @@ unitSystemRadios unitSystem =
                 ]
             ]
 
-settingsDefaultsFormGroup : ItemType -> Maybe RememberedPurchase -> Html Msg
-settingsDefaultsFormGroup itemType maybeRememberedPurchase =
+settingsDefaultsFormGroup : ItemType -> UnitSystem -> RememberedPurchase -> Html Msg
+settingsDefaultsFormGroup itemType unitSystem remembered =
     let
         nameLabel =
             (itemTypeToString itemType) ++ " Name:"
+
         nameValueOrPlaceholder =
-            case maybeRememberedPurchase of
-                Just purchase ->
-                    (value purchase.name)
+            case remembered.name of
+                Just name ->
+                    (value name)
                 Nothing ->
                     (placeholder "The good stuff")
         
         quantityValueOrPlaceholder =
-            case maybeRememberedPurchase of
-                Just purchase ->
-                    (value (toString purchase.quantity))
+            case remembered.quantity of
+                Just quantity ->
+                    (value (toString quantity))
                 Nothing ->
                     (placeholder "1")
+        
+        quantityUnits = 
+            if itemType == Models.Food then
+                if unitSystem == Models.Metric then
+                    "kg(s)"
+                else
+                    "lb(s)"
+            else
+                "dose(s)"
 
         nameAttrs = 
             [ type_ "text"
             , class "form-control"
             , id "itemName"
-            , onInput (Msgs.SettingsUpdateDefaultsName itemType) 
+            , onFocusOut (Msgs.SettingsUpdateDefaultsName itemType) 
             , nameValueOrPlaceholder
             ]
         
@@ -139,6 +151,19 @@ settingsDefaultsFormGroup itemType maybeRememberedPurchase =
             , onFocusOut (Msgs.SettingsUpdateDefaultsQuantity itemType)
             , quantityValueOrPlaceholder
             ]
+        
+        quantityInputGroup =
+            div [ class "input-group" ]
+                [ input quantityAttrs []
+                , div [ class "input-group-append" ]
+                    [ div [ class "input-group-text" ] [ text quantityUnits ] ]
+                ]
+
+        -- <div class="input-group mb-2">
+        --  <div class="input-group-prepend">
+        --       <div class="input-group-text">@</div>
+        --  </div>
+        --  <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Username">
     in
         div [ ]
             [ div [ class "form-group" ]
@@ -147,6 +172,6 @@ settingsDefaultsFormGroup itemType maybeRememberedPurchase =
                 ]
             , div [ class "form-group" ]
                 [ label [ for "itemQuantity" ] [ text "Quantity:"]
-                , input quantityAttrs []
+                , quantityInputGroup
                 ]
             ]

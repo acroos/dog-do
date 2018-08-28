@@ -1,4 +1,4 @@
-module DateUtils exposing (toIso8601String, toPrettyString)
+module Utils.DateUtils exposing (toIso8601String, toPrettyString)
 
 import Date exposing (Date)
 

@@ -8,9 +8,26 @@ if (!window.indexedDB) {
 }
 
 const dexieDb = new Dexie('Dev-DogDoDb');
+
 dexieDb.version(2).stores({
     events: '++id, eventType, itemType, itemName, quantity, timestamp'
 });
+
+const app = Main.embed(document.getElementById('root'));
+
+var dogName, unitSystem, defaults;
+
+if (dogName = localStorage.getItem('dogName')) {
+    app.ports.gotDogName.send(dogName);
+}
+
+if (unitSystem = localStorage.getItem('unitSystem')) {
+    app.ports.gotUnitSystem.send(unitSystem);
+}
+
+if (defaults = localStorage.getItem('defaults')) {
+    app.ports.gotDefaults.send(JSON.parse(defaults));
+}
 
 dexieDb.events.toArray().then((events) => {
     if (events.length == 0) {
@@ -20,8 +37,6 @@ dexieDb.events.toArray().then((events) => {
         .map(parseEventForElmInterop)
         .forEach(e => app.ports.gotEventFromDatabase.send(e));
 });
-
-const app = Main.embed(document.getElementById('root'));
 
 app.ports.saveEvent.subscribe((event) => {
     if (!window.indexedDB) {
@@ -38,6 +53,18 @@ app.ports.saveEvent.subscribe((event) => {
     dexieDb.events.add(parsedEvent).then((id) => {
         app.ports.gotEventFromDatabase.send(parseEventForElmInterop(event));
     });
+});
+
+app.ports.saveDogName.subscribe((name) => {
+    localStorage.setItem('dogName', name.toString());
+});
+
+app.ports.saveUnitSystem.subscribe((unitSystem) => {
+    localStorage.setItem('unitSystem', unitSystem.toString());
+});
+
+app.ports.saveDefaults.subscribe((defaults) => {
+    localStorage.setItem('defaults', JSON.stringify(defaults));
 });
 
 registerServiceWorker();

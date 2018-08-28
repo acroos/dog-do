@@ -15,22 +15,14 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { dog = { name = "Fido" }
+    { dog = { name = Nothing }
     , unitSystem = Metric
     , events = []
     , error = ""
     , showSettings = False
     , pendingEvent = Nothing
-    , lastPurchases = 
-        { food = Nothing
-        , heartwormMedicine = Nothing
-        , fleaTickMedicine = Nothing
-        }
-    , defaultPurchases = 
-        { food = Nothing
-        , heartwormMedicine = Nothing
-        , fleaTickMedicine = Nothing
-        }
+    , lastPurchases = emptyRememberedPurchases
+    , defaultPurchases = emptyRememberedPurchases
     }
 
 type EventType
@@ -55,17 +47,17 @@ type alias Event =
     }
 
 type alias Dog =
-    { name : String }
+    { name : Maybe String }
 
 type alias RememberedPurchases =
-    { food : Maybe RememberedPurchase
-    , heartwormMedicine : Maybe RememberedPurchase
-    , fleaTickMedicine : Maybe RememberedPurchase
+    { food : RememberedPurchase
+    , heartwormMedicine : RememberedPurchase
+    , fleaTickMedicine : RememberedPurchase
     }
 
 type alias RememberedPurchase =
-    { name : String
-    , quantity : Float
+    { name : Maybe String
+    , quantity : Maybe Float
     }
 
 createPurchaseEvent : ItemType -> String -> Float -> Date -> Event
@@ -103,3 +95,14 @@ updateEventQuantity currentEvent newQuantity =
     , quantity = newQuantity
     , timestamp = currentEvent.timestamp
     }
+
+emptyRememberedPurchases : RememberedPurchases
+emptyRememberedPurchases =
+    { food = emptyRememberedPurchase
+    , heartwormMedicine = emptyRememberedPurchase
+    , fleaTickMedicine = emptyRememberedPurchase
+    }
+
+emptyRememberedPurchase : RememberedPurchase
+emptyRememberedPurchase =
+    { name = Nothing, quantity = Nothing }

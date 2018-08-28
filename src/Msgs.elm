@@ -13,8 +13,12 @@ type Msg
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String
     | SavePendingEvent
+    | GotDogName String
+    | GotUnitSystem String
+    | GotDefaults Value
     | GotEventFromDatabase Value
     | ToggleShowSettings
+    | SettingsUpdateDogName String
     | SettingsUpdateUnitSystem UnitSystem
     | SettingsUpdateDefaultsName ItemType String
     | SettingsUpdateDefaultsQuantity ItemType String

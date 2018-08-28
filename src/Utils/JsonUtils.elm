@@ -1,9 +1,9 @@
-module JsonUtils exposing (decodeEvent, encodeEvent)
+module Utils.JsonUtils exposing (decodeEvent, encodeEvent, decodeRememberedPurchases, encodeRememberedPurchases)
 
 import Date exposing (Date)
 import Json.Decode as Decode
-import Json.Encode exposing (Value, float, object, string)
-import Models exposing (Event, EventType, ItemType)
+import Json.Encode exposing (Value, float, null, object, string)
+import Models exposing (Event, EventType, ItemType, RememberedPurchase, RememberedPurchases)
 import Utils.DateUtils exposing (toIso8601String)
 
 encodeEvent : Event -> Value
@@ -14,7 +14,7 @@ encodeEvent event =
         , ("itemName", (string event.itemName))
         , ("quantity", (float event.quantity))
         , ("timestamp", (encodeDate event.timestamp))
-        ])
+        ] )
 
 decodeEvent : Decode.Decoder Event
 decodeEvent =
@@ -24,6 +24,55 @@ decodeEvent =
         (Decode.field "itemName" Decode.string)
         (Decode.field "quantity" Decode.float)
         (Decode.field "timestamp" dateDecoder)
+
+encodeRememberedPurchases : RememberedPurchases -> Value
+encodeRememberedPurchases remembered =
+    object(
+        [ ("food", (encodeRememberedPurchase remembered.food))
+        , ("heartwormMedicine", (encodeRememberedPurchase remembered.heartwormMedicine))
+        , ("fleaTickMedicine", (encodeRememberedPurchase remembered.fleaTickMedicine))
+        ] )
+
+decodeRememberedPurchases : Decode.Decoder RememberedPurchases
+decodeRememberedPurchases =
+    Decode.map3 RememberedPurchases
+        (Decode.field "food" decodeRememberedPurchase)
+        (Decode.field "heartwormMedicine" decodeRememberedPurchase)
+        (Decode.field "fleaTickMedicine" decodeRememberedPurchase)
+
+decodeRememberedPurchase : Decode.Decoder RememberedPurchase
+decodeRememberedPurchase =
+    Decode.map2 RememberedPurchase
+        (Decode.maybe (Decode.field "name" Decode.string))
+        (Decode.maybe (Decode.field "quantity" Decode.float))
+
+encodeRememberedPurchase : RememberedPurchase -> Value
+encodeRememberedPurchase remembered =
+    let
+        nameVal = 
+            case remembered.name of
+                Just name ->
+                    if name == "" then
+                        null
+                    else
+                        string name
+                Nothing ->
+                    null
+
+        quantityVal =
+            case remembered.quantity of
+                Just quantity ->
+                    if quantity == 0 then
+                        null
+                    else
+                        float quantity
+                Nothing ->
+                    null
+    in    
+        object(
+            [ ("name", nameVal)
+            , ("quantity", quantityVal)
+            ] )
 
 eventTypeDecoder : Decode.Decoder EventType
 eventTypeDecoder =

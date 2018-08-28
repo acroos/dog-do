@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (Html)
 import Models exposing (Model, initialModel)
 import Msgs exposing (Msg)
-import Ports exposing (gotEventFromDatabase)
+import Ports exposing (..)
 import Update exposing (update)
 import View exposing (view)
 
@@ -14,8 +14,13 @@ init =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model = 
-    gotEventFromDatabase Msgs.GotEventFromDatabase
+subscriptions model =
+    Sub.batch
+        [ gotEventFromDatabase Msgs.GotEventFromDatabase
+        , gotDogName Msgs.GotDogName
+        , gotUnitSystem Msgs.GotUnitSystem
+        , gotDefaults Msgs.GotDefaults
+        ]
 
 
 ---- PROGRAM ----
