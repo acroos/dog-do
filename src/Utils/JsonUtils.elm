@@ -13,6 +13,8 @@ import Json.Encode exposing (..)
 import Models exposing (..)
 import Utils.DateUtils exposing (toIso8601String)
 
+--- PUBLIC ---
+
 encodeEvent : Event -> Value
 encodeEvent event =
     object
@@ -103,6 +105,8 @@ decodeSettings =
         (Decode.maybe (Decode.field "dogFoodPerDay" Decode.float))
         (Decode.maybe (Decode.field "heartwormMedicineInterval" Decode.int))
         (Decode.maybe (Decode.field "fleaTickMedicineInterval" Decode.int))
+
+--- PRIVATE ---
 
 decodeRememberedPurchase : Decode.Decoder RememberedPurchase
 decodeRememberedPurchase =

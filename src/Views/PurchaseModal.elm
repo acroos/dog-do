@@ -8,6 +8,8 @@ import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onFocusOut)
 import Utils.StringUtils exposing (itemTypeToString)
 
+--- PUBLIC ---
+
 purchaseModal : Maybe Event -> Html Msg
 purchaseModal event =
     let
@@ -30,6 +32,8 @@ purchaseModal event =
                     content
                 ]
             ]
+
+--- PRIVATE ---
 
 modalContent : Event -> List (Html Msg)
 modalContent event =

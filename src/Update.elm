@@ -9,6 +9,8 @@ import Models exposing (..)
 import Task exposing (Task)
 import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases, decodeSettings)
 
+--- PUBLIC ---
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -180,6 +182,8 @@ update msg model =
                     updateDefaults oldDefaults itemType updatedDefault
             in
                 ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
+
+--- PRIVATE ---
 
 updateDefaults : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
 updateDefaults oldDefaults itemType newDefault =

@@ -10,6 +10,8 @@ import Utils.StringUtils exposing (..)
 import Views.PurchaseModal exposing (purchaseModal)
 import Views.Settings exposing (settingsPane)
 
+--- PUBLIC ---
+
 view : Model -> Html Msg
 view model =
     div []
@@ -20,6 +22,8 @@ view model =
         , container (columns model.events model.defaultPurchases model.lastPurchases)
         , purchaseModal model.pendingEvent
         ]
+
+--- PRIVATE ---
 
 settingsIcon : Html Msg
 settingsIcon =
@@ -54,7 +58,7 @@ genericColumn : ItemType -> List Event -> RememberedPurchase -> RememberedPurcha
 genericColumn itemType allEvents default last =
     let
         header =
-            headerTextFromItemType itemType
+            itemTypeToString itemType
         name =
             nameFromDefaultAndLast default.name last.name
         quantity = 
@@ -186,13 +190,3 @@ buttonRow itemType itemName itemQuantity =
     [ div [ class "col-sm" ] [ (purchasedButton itemType itemName itemQuantity) ]
     , div [ class "col-sm" ] [ (administeredButton itemType itemName) ]
     ]
-
-headerTextFromItemType : ItemType -> String
-headerTextFromItemType itemType =
-    case itemType of
-        Models.Food ->
-            "Food"
-        Models.HeartwormMedicine ->
-            "Heartworm Medicine"
-        Models.FleaTickMedicine ->
-            "Flea/Tick Medicine"

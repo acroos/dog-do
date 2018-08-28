@@ -8,6 +8,8 @@ import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onChange, onFocusOut)
 import Utils.StringUtils exposing (itemTypeToString)
 
+--- PUBLIC ---
+
 settingsPane : Bool -> Settings -> RememberedPurchases -> Html Msg
 settingsPane visible settings defaults =
     let
@@ -20,6 +22,8 @@ settingsPane visible settings defaults =
         
     div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
         [ settingsForm settings defaults ]
+
+--- PRIVATE ---
 
 settingsForm : Settings -> RememberedPurchases -> Html Msg
 settingsForm settings defaults =

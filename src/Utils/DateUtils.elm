@@ -2,6 +2,8 @@ module Utils.DateUtils exposing (toIso8601String, toPrettyString)
 
 import Date exposing (Date)
 
+--- PUBLIC ---
+
 toIso8601String : Date -> String
 toIso8601String date =
     let
@@ -30,6 +32,8 @@ toPrettyString date =
     ++ (toString (Date.month date))
     ++ " "
     ++ (toString (Date.year date))
+
+--- PRIVATE ---
 
 zeroPadInt2 : Int -> String
 zeroPadInt2 num =

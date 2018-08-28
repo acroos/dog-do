@@ -2,6 +2,8 @@ module Utils.StringUtils exposing (..)
 
 import Models exposing (EventType, ItemType)
 
+--- PUBLIC ---
+
 eventTypeToString : EventType -> String
 eventTypeToString eventType =
     if eventType == Models.PurchaseEvent then
