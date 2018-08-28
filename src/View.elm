@@ -14,7 +14,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ text model.error
-        , settingsPane model.showSettings model.dog model.unitSystem model.defaultPurchases
+        , settingsPane model.showSettings model.settings model.defaultPurchases
         , settingsIcon
         , header
         , container (columns model.events model.defaultPurchases model.lastPurchases)
@@ -170,11 +170,11 @@ purchasedButton itemType name quantity =
             , attribute "data-target" "#purchaseModal"
             ]
     in
-        blockButton "Purchased!" buttonAttributes (Msgs.RequestPurchaseEvent itemType name quantity) 
+        blockButton "Purchased!" buttonAttributes (Msgs.NewPurchaseEventRequestTimestamp itemType name quantity) 
 
 administeredButton : ItemType -> String -> Html Msg
 administeredButton itemType name =
-    blockButton "Administered!" [] (Msgs.RequestAdministerEvent itemType name)
+    blockButton "Administered!" [] (Msgs.NewAdministerEventRequestTimestamp itemType name)
 
 row :  List (Html Msg) -> Html Msg
 row columns =

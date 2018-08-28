@@ -1,22 +1,17 @@
 module Commands exposing (..)
 
-import Json.Encode exposing (string)
-import Models exposing (Event, RememberedPurchases, UnitSystem)
+import Models exposing (Event, RememberedPurchases, Settings)
 import Msgs exposing (Msg)
 import Ports
-import Utils.JsonUtils exposing (encodeEvent, encodeRememberedPurchases)
+import Utils.JsonUtils exposing (encodeEvent, encodeRememberedPurchases, encodeSettings)
 
 saveEvent : Event -> Cmd Msg
 saveEvent event =
     Ports.saveEvent (encodeEvent event)
 
-saveDogName : String -> Cmd Msg
-saveDogName dogName =
-    Ports.saveDogName (string dogName)
-
-saveUnitSystem : UnitSystem -> Cmd Msg
-saveUnitSystem unitSystem =
-    Ports.saveUnitSystem (string (toString unitSystem))
+saveSettings : Settings -> Cmd Msg
+saveSettings settings =
+    Ports.saveSettings (encodeSettings settings)
 
 saveDefaults : RememberedPurchases -> Cmd Msg
 saveDefaults defaults =

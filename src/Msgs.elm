@@ -5,20 +5,21 @@ import Json.Encode exposing (Value)
 import Models exposing (Event, ItemType, RememberedPurchase, UnitSystem)
 
 type Msg
-    = RequestPurchaseEvent ItemType String Float
-    | RequestAdministerEvent ItemType String
-    | ReceivePurchaseEvent ItemType String Float Date
-    | ReceiveAdministerEvent ItemType String Date
+    = NewPurchaseEventRequestTimestamp ItemType String Float
+    | NewAdministerEventRequestTimestamp ItemType String
+    | NewPurchaseEventReceiveTimestamp ItemType String Float Date
+    | NewAdministerEventReceiveTimestamp ItemType String Date
     | DeletePendingEvent
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String
     | SavePendingEvent
-    | GotDogName String
-    | GotUnitSystem String
-    | GotDefaults Value
-    | GotEventFromDatabase Value
+    | RetrievedDefaults Value
+    | RetrievedEventFromDatabase Value
+    | RetrievedSettings Value
     | ToggleShowSettings
     | SettingsUpdateDogName String
     | SettingsUpdateUnitSystem UnitSystem
-    | SettingsUpdateDefaultsName ItemType String
-    | SettingsUpdateDefaultsQuantity ItemType String
+    | SettingsUpdateFoodPerDay Float
+    | SettingsUpdateMedicineInterval ItemType Int
+    | DefaultsUpdateNameForItemType ItemType String
+    | DefaultsUpdateQuantityForItemType ItemType String

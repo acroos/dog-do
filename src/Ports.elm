@@ -5,11 +5,9 @@ import Json.Decode
 import Json.Encode exposing (Value)
 
 port saveEvent : Value -> Cmd msg
-port saveDogName : Value -> Cmd msg
-port saveUnitSystem : Value -> Cmd msg
+port saveSettings : Value -> Cmd msg
 port saveDefaults : Value -> Cmd msg
 
-port gotDogName : (String -> msg) -> Sub msg
-port gotUnitSystem : (String -> msg) -> Sub msg
-port gotDefaults : (Value -> msg) -> Sub msg
-port gotEventFromDatabase : (Value -> msg) -> Sub msg
+port retrievedSettings : (Value -> msg) -> Sub msg
+port retrievedDefaults : (Value -> msg) -> Sub msg
+port retrievedEventFromDatabase : (Value -> msg) -> Sub msg

@@ -16,10 +16,9 @@ init =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ gotEventFromDatabase Msgs.GotEventFromDatabase
-        , gotDogName Msgs.GotDogName
-        , gotUnitSystem Msgs.GotUnitSystem
-        , gotDefaults Msgs.GotDefaults
+        [ retrievedSettings Msgs.RetrievedSettings
+        , retrievedEventFromDatabase Msgs.RetrievedEventFromDatabase
+        , retrievedDefaults Msgs.RetrievedDefaults
         ]
 
 

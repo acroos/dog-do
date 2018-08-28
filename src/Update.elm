@@ -7,24 +7,24 @@ import Json.Decode as Decode
 import Msgs exposing (Msg)
 import Models exposing (..)
 import Task exposing (Task)
-import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases)
+import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases, decodeSettings)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Msgs.RequestPurchaseEvent itemType name quantity ->
-            ( model, Task.perform (Msgs.ReceivePurchaseEvent itemType name quantity) Date.now)
+        Msgs.NewPurchaseEventRequestTimestamp itemType name quantity ->
+            ( model, Task.perform (Msgs.NewPurchaseEventReceiveTimestamp itemType name quantity) Date.now)
 
-        Msgs.RequestAdministerEvent itemType name ->
-            ( model, Task.perform (Msgs.ReceiveAdministerEvent itemType name) Date.now)
+        Msgs.NewAdministerEventRequestTimestamp itemType name ->
+            ( model, Task.perform (Msgs.NewAdministerEventReceiveTimestamp itemType name) Date.now)
 
-        Msgs.ReceivePurchaseEvent itemType name quantity date ->
+        Msgs.NewPurchaseEventReceiveTimestamp itemType name quantity date ->
             let
                 purchaseEvent = (createPurchaseEvent itemType name quantity date)
             in
                 ( { model | pendingEvent = Just purchaseEvent }, Cmd.none )
 
-        Msgs.ReceiveAdministerEvent itemType name date ->
+        Msgs.NewAdministerEventReceiveTimestamp itemType name date ->
             let
                 administerEvent = (createAdministerEvent itemType name date)
             in
@@ -77,36 +77,73 @@ update msg model =
                     Nothing ->
                         ( model, Cmd.none )
 
-        Msgs.GotDogName name ->
-            ( { model | dog = { name = Just name } }, Cmd.none )
-
-        Msgs.GotUnitSystem systemString ->
-            ( { model | unitSystem = (unitSystemFromString systemString) }, Cmd.none )
-
-        Msgs.GotDefaults value ->
+        Msgs.RetrievedDefaults value ->
             case Decode.decodeValue decodeRememberedPurchases value of
                 Ok defaults ->
                     ( { model | defaultPurchases = defaults }, Cmd.none )
                 Err err ->
-                    ( { model | error = ("GotDefaults: " ++ err) }, Cmd.none )
+                    ( { model | error = ("RetrievedDefaults: " ++ err) }, Cmd.none )
 
-        Msgs.GotEventFromDatabase event ->
+        Msgs.RetrievedEventFromDatabase event ->
             case Decode.decodeValue decodeEvent event of
                 Ok val ->
                     ( { model | events = (val :: model.events) }, Cmd.none )
                 Err err ->
-                    ( { model | error = ("GotEventFromDatabase: " ++ err) }, Cmd.none )
+                    ( { model | error = ("RetrievedEventFromDatabase: " ++ err) }, Cmd.none )
+
+        Msgs.RetrievedSettings value ->
+            case Decode.decodeValue decodeSettings value of
+                Ok settings ->
+                    ( { model | settings = settings }, Cmd.none )
+                Err err ->
+                    ( { model | error = ("RetrievedSettings: " ++ err) }, Cmd.none )
 
         Msgs.ToggleShowSettings ->
             ( { model | showSettings = not model.showSettings }, Cmd.none )
 
         Msgs.SettingsUpdateDogName dogName ->
-            ( { model | dog = { name = Just dogName } }, (saveDogName dogName) )
+            let
+                oldSettings = 
+                    model.settings
+                newSettings =
+                    { oldSettings | dogName = Just dogName }
+            in
+                ( model, (saveSettings newSettings) )
 
         Msgs.SettingsUpdateUnitSystem unitSystem ->
-            ( { model | unitSystem = unitSystem }, (saveUnitSystem unitSystem) )
+            let
+                oldSettings = 
+                    model.settings
+                newSettings =
+                    { oldSettings | unitSystem = unitSystem }
+            in
+                ( model, (saveSettings newSettings) )
 
-        Msgs.SettingsUpdateDefaultsName itemType name ->
+        Msgs.SettingsUpdateFoodPerDay amount ->
+            let
+                oldSettings = 
+                    model.settings
+                newSettings =
+                    { oldSettings | dogFoodPerDay = Just amount }
+            in
+                ( model, (saveSettings newSettings) )
+
+        Msgs.SettingsUpdateMedicineInterval itemType interval ->
+            let
+                oldSettings = 
+                    model.settings
+                newSettings =
+                    case itemType of
+                        Models.HeartwormMedicine ->
+                            { oldSettings | heartwormMedicineInterval = Just interval }
+                        Models.FleaTickMedicine -> 
+                            { oldSettings | fleaTickMedicineInterval = Just interval }
+                        _ ->
+                            oldSettings
+            in
+                ( model, (saveSettings newSettings) )
+
+        Msgs.DefaultsUpdateNameForItemType itemType name ->
             let
                 default =
                     fetchDefaultPurchase model itemType
@@ -122,7 +159,7 @@ update msg model =
             in
                 ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
 
-        Msgs.SettingsUpdateDefaultsQuantity itemType quantityString ->
+        Msgs.DefaultsUpdateQuantityForItemType itemType quantityString ->
             let
                 default =
                     fetchDefaultPurchase model itemType
@@ -173,13 +210,6 @@ fetchDefaultPurchase model itemType =
             model.defaultPurchases.heartwormMedicine
         Models.FleaTickMedicine ->
             model.defaultPurchases.fleaTickMedicine
-
-unitSystemFromString : String -> UnitSystem
-unitSystemFromString string =
-    if string == (toString Models.Imperial) then
-        Models.Imperial
-    else
-        Models.Metric
 
 quantityFloatFromStringWithEventDefault : String -> Maybe Event -> Float
 quantityFloatFromStringWithEventDefault quantityString maybeEvent =

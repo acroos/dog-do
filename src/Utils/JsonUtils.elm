@@ -1,20 +1,27 @@
-module Utils.JsonUtils exposing (decodeEvent, encodeEvent, decodeRememberedPurchases, encodeRememberedPurchases)
+module Utils.JsonUtils exposing 
+    ( decodeEvent
+    , encodeEvent
+    , decodeRememberedPurchases
+    , encodeRememberedPurchases
+    , decodeSettings
+    , encodeSettings
+    )
 
 import Date exposing (Date)
 import Json.Decode as Decode
-import Json.Encode exposing (Value, float, null, object, string)
-import Models exposing (Event, EventType, ItemType, RememberedPurchase, RememberedPurchases)
+import Json.Encode exposing (..)
+import Models exposing (..)
 import Utils.DateUtils exposing (toIso8601String)
 
 encodeEvent : Event -> Value
 encodeEvent event =
-    object(
+    object
         [ ("eventType", (string (eventTypeToString event.eventType)))
         , ("itemType", (string (itemTypeToString event.itemType)))
         , ("itemName", (string event.itemName))
         , ("quantity", (float event.quantity))
         , ("timestamp", (encodeDate event.timestamp))
-        ] )
+        ]
 
 decodeEvent : Decode.Decoder Event
 decodeEvent =
@@ -27,11 +34,11 @@ decodeEvent =
 
 encodeRememberedPurchases : RememberedPurchases -> Value
 encodeRememberedPurchases remembered =
-    object(
+    object
         [ ("food", (encodeRememberedPurchase remembered.food))
         , ("heartwormMedicine", (encodeRememberedPurchase remembered.heartwormMedicine))
         , ("fleaTickMedicine", (encodeRememberedPurchase remembered.fleaTickMedicine))
-        ] )
+        ]
 
 decodeRememberedPurchases : Decode.Decoder RememberedPurchases
 decodeRememberedPurchases =
@@ -39,6 +46,63 @@ decodeRememberedPurchases =
         (Decode.field "food" decodeRememberedPurchase)
         (Decode.field "heartwormMedicine" decodeRememberedPurchase)
         (Decode.field "fleaTickMedicine" decodeRememberedPurchase)
+
+encodeSettings : Settings -> Value
+encodeSettings settings =
+    let
+        dogName =
+            case settings.dogName of
+                Just name ->
+                    if name == "" then
+                         null
+                    else
+                        string name
+                Nothing ->
+                    null
+        dogFoodPerDay = 
+            case settings.dogFoodPerDay of
+                Just value ->
+                    if value == 0 then
+                        null
+                    else
+                        float value
+                Nothing ->
+                    null
+        heartwormMedicineInterval = 
+            case settings.heartwormMedicineInterval of
+                Just value ->
+                    if value == 0 then
+                        null
+                    else
+                        int value
+                Nothing ->
+                    null
+        fleaTickMedicineInterval = 
+            case settings.fleaTickMedicineInterval of
+                Just value ->
+                    if value == 0 then
+                        null
+                    else
+                        int value
+                Nothing ->
+                    null
+    in
+        object
+            [ ("dogName", dogName)
+            , ("unitSystem", string (toString settings.unitSystem))
+            , ("dogFoodPerDay", dogFoodPerDay)
+            , ("heartwormMedicineInterval", heartwormMedicineInterval)
+            , ("fleaTickMedicineInterval", fleaTickMedicineInterval)
+            ]
+
+decodeSettings : Decode.Decoder Settings
+decodeSettings =
+    Decode.map5 Settings
+        (Decode.maybe (Decode.field "dogName" Decode.string))
+        (Decode.field "unitSystem" decodeUnitSystem)
+        (Decode.maybe (Decode.field "dogFoodPerDay" Decode.float))
+        (Decode.maybe (Decode.field "heartwormMedicineInterval" Decode.int))
+        (Decode.maybe (Decode.field "fleaTickMedicineInterval" Decode.int))
 
 decodeRememberedPurchase : Decode.Decoder RememberedPurchase
 decodeRememberedPurchase =
@@ -69,10 +133,10 @@ encodeRememberedPurchase remembered =
                 Nothing ->
                     null
     in    
-        object(
+        object
             [ ("name", nameVal)
             , ("quantity", quantityVal)
-            ] )
+            ]
 
 eventTypeDecoder : Decode.Decoder EventType
 eventTypeDecoder =
@@ -143,6 +207,19 @@ itemTypeToString itemType =
             fleaTickMedicineItemTypeString
         Models.Food ->
             foodItemTypeString
+
+decodeUnitSystem : Decode.Decoder UnitSystem
+decodeUnitSystem =
+    let
+        convert : String -> Decode.Decoder UnitSystem
+        convert raw = 
+            Decode.succeed (unitSystemFromString raw)
+    in
+        Decode.string |> Decode.andThen convert
+
+
+
+
 
 --- STRING VALUES FOR ENCODING/DECODING ---
 

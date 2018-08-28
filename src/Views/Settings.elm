@@ -3,13 +3,13 @@ module Views.Settings exposing (settingsPane)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Models exposing (ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Dog)
+import Models exposing (ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Dog, Settings)
 import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onChange, onFocusOut)
 import Utils.StringUtils exposing (itemTypeToString)
 
-settingsPane : Bool -> Dog -> UnitSystem -> RememberedPurchases -> Html Msg
-settingsPane visible dog unitSystem defaults =
+settingsPane : Bool -> Settings -> RememberedPurchases -> Html Msg
+settingsPane visible settings defaults =
     let
         displayClass =
             if visible then
@@ -19,18 +19,18 @@ settingsPane visible dog unitSystem defaults =
     in
         
     div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
-        [ settingsForm dog unitSystem defaults ]
+        [ settingsForm settings defaults ]
 
-settingsForm : Dog -> UnitSystem -> RememberedPurchases -> Html Msg
-settingsForm dog unitSystem defaults =
+settingsForm : Settings -> RememberedPurchases -> Html Msg
+settingsForm settings defaults =
     Html.form [ class "text-left px-3" ]
         [ h2 [ class "text-primary text-center mt-4" ] [ text "Settings" ]
-        , dogInput dog
-        , unitSystemRadios unitSystem
+        , dogInput settings.dogName
+        , unitSystemRadios settings.unitSystem
         , h2 [ class "text-primary text-center" ] [ text "Defaults:" ]
-        , settingsDefaultsFormGroup Models.Food unitSystem defaults.food
-        , settingsDefaultsFormGroup Models.HeartwormMedicine unitSystem defaults.heartwormMedicine
-        , settingsDefaultsFormGroup Models.FleaTickMedicine unitSystem defaults.fleaTickMedicine
+        , settingsDefaultsFormGroup Models.Food settings.unitSystem defaults.food
+        , settingsDefaultsFormGroup Models.HeartwormMedicine settings.unitSystem defaults.heartwormMedicine
+        , settingsDefaultsFormGroup Models.FleaTickMedicine settings.unitSystem defaults.fleaTickMedicine
         , a 
             [ class "btn btn-success float-right text-white"
             , onClick Msgs.ToggleShowSettings
@@ -38,11 +38,11 @@ settingsForm dog unitSystem defaults =
             [ text "Done" ]
         ]
 
-dogInput : Dog -> Html Msg
-dogInput dog =
+dogInput : Maybe String -> Html Msg
+dogInput dogName =
     let
         valueOrPlaceholder = 
-            case dog.name of
+            case dogName of
                 Just name ->
                     value name
                 Nothing ->
@@ -140,7 +140,7 @@ settingsDefaultsFormGroup itemType unitSystem remembered =
             [ type_ "text"
             , class "form-control"
             , id "itemName"
-            , onFocusOut (Msgs.SettingsUpdateDefaultsName itemType) 
+            , onFocusOut (Msgs.DefaultsUpdateNameForItemType itemType) 
             , nameValueOrPlaceholder
             ]
         
@@ -148,7 +148,7 @@ settingsDefaultsFormGroup itemType unitSystem remembered =
             [ type_ "text"
             , class "form-control"
             , id "itemQuantity"
-            , onFocusOut (Msgs.SettingsUpdateDefaultsQuantity itemType)
+            , onFocusOut (Msgs.DefaultsUpdateQuantityForItemType itemType)
             , quantityValueOrPlaceholder
             ]
         

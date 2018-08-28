@@ -3,6 +3,8 @@ import { Main } from './Main.elm';
 import Dexie from 'dexie';
 import registerServiceWorker from './registerServiceWorker';
 
+registerServiceWorker();
+
 if (!window.indexedDB) {
     window.alert("Your browser doesn't support a stable version of IndexedDB.  Long-term storage will not be enabled.  Please try a different browser.");
 }
@@ -15,27 +17,22 @@ dexieDb.version(2).stores({
 
 const app = Main.embed(document.getElementById('root'));
 
-var dogName, unitSystem, defaults;
-
-if (dogName = localStorage.getItem('dogName')) {
-    app.ports.gotDogName.send(dogName);
-}
-
-if (unitSystem = localStorage.getItem('unitSystem')) {
-    app.ports.gotUnitSystem.send(unitSystem);
+var defaults, settings;
+if (settings = localStorage.getItem('settings')) {
+    app.ports.retrievedSettings.send(JSON.parse(settings));
 }
 
 if (defaults = localStorage.getItem('defaults')) {
-    app.ports.gotDefaults.send(JSON.parse(defaults));
+    app.ports.retrievedDefaults.send(JSON.parse(defaults));
 }
 
-dexieDb.events.toArray().then((events) => {
-    if (events.length == 0) {
-        console.log("No events to start with...");
-    }
-    events
-        .map(parseEventForElmInterop)
-        .forEach(e => app.ports.gotEventFromDatabase.send(e));
+dexieDb.events.orderBy('timestamp').toArray().then((events) => {
+        if (events.length == 0) {
+            console.log("No events to start with...");
+        }
+        events
+            .map(parseEventForElmInterop)
+            .forEach(e => app.ports.retrievedEventFromDatabase.send(e));
 });
 
 app.ports.saveEvent.subscribe((event) => {
@@ -51,33 +48,28 @@ app.ports.saveEvent.subscribe((event) => {
 
     var parsedEvent = parseEventForDbStorage(event);
     dexieDb.events.add(parsedEvent).then((id) => {
-        app.ports.gotEventFromDatabase.send(parseEventForElmInterop(event));
+        app.ports.retrievedEventFromDatabase.send(parseEventForElmInterop(event));
     });
 });
 
-app.ports.saveDogName.subscribe((name) => {
-    localStorage.setItem('dogName', name.toString());
-});
-
-app.ports.saveUnitSystem.subscribe((unitSystem) => {
-    localStorage.setItem('unitSystem', unitSystem.toString());
-});
+app.ports.saveSettings.subscribe((settings) => {
+    localStorage.setItem('settings', JSON.stringify(settings));
+    app.ports.retrievedSettings.send(settings);
+})
 
 app.ports.saveDefaults.subscribe((defaults) => {
     localStorage.setItem('defaults', JSON.stringify(defaults));
 });
 
-registerServiceWorker();
-
 const parseEventForDbStorage = (event) => {
-    var newEvent = event;
+    var newEvent = Object.assign({}, event);
     var parsedDate = Date.parse(event.timestamp);
     newEvent.timestamp = parsedDate;
     return newEvent;
 };
 
 const parseEventForElmInterop = (event) => {
-    var newEvent = event;
+    var newEvent = Object.assign({}, event);
     var isoDate = new Date(event.timestamp).toISOString();
     newEvent.timestamp = isoDate;
     return newEvent;

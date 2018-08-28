@@ -3,8 +3,7 @@ module Models exposing (..)
 import Date exposing (Date)
 
 type alias Model =
-    { dog : Dog
-    , unitSystem : UnitSystem
+    { settings: Settings
     , events : List Event
     , error : String
     , showSettings : Bool
@@ -15,8 +14,7 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { dog = { name = Nothing }
-    , unitSystem = Metric
+    { settings = emptySettings
     , events = []
     , error = ""
     , showSettings = False
@@ -46,9 +44,6 @@ type alias Event =
     , timestamp : Date
     }
 
-type alias Dog =
-    { name : Maybe String }
-
 type alias RememberedPurchases =
     { food : RememberedPurchase
     , heartwormMedicine : RememberedPurchase
@@ -58,6 +53,14 @@ type alias RememberedPurchases =
 type alias RememberedPurchase =
     { name : Maybe String
     , quantity : Maybe Float
+    }
+
+type alias Settings =
+    { dogName : Maybe String
+    , unitSystem : UnitSystem
+    , dogFoodPerDay : Maybe Float
+    , heartwormMedicineInterval : Maybe Int
+    , fleaTickMedicineInterval : Maybe Int
     }
 
 createPurchaseEvent : ItemType -> String -> Float -> Date -> Event
@@ -77,6 +80,13 @@ createAdministerEvent itemType itemName date =
     , quantity = 1.0
     , timestamp = date
     }
+
+unitSystemFromString : String -> UnitSystem
+unitSystemFromString string =
+    if string == (toString Imperial) then
+        Imperial
+    else
+        Metric
 
 updateEventName : Event -> String -> Event
 updateEventName currentEvent newName =
@@ -106,3 +116,12 @@ emptyRememberedPurchases =
 emptyRememberedPurchase : RememberedPurchase
 emptyRememberedPurchase =
     { name = Nothing, quantity = Nothing }
+
+emptySettings : Settings
+emptySettings =
+    { dogName = Nothing
+    , unitSystem = Metric
+    , dogFoodPerDay = Nothing
+    , heartwormMedicineInterval = Nothing
+    , fleaTickMedicineInterval = Nothing
+    }
