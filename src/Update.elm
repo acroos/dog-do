@@ -95,9 +95,6 @@ update msg model =
                 Err err ->
                     ( { model | error = ("RetrievedSettings: " ++ err) }, updateNowTime )
 
-        Msgs.ToggleShowSettings ->
-            ( { model | showSettings = not model.showSettings }, updateNowTime )
-
         Msgs.SettingsUpdateDogName dogName ->
             let
                 oldSettings = 
@@ -116,25 +113,38 @@ update msg model =
             in
                 ( model, batchWithTimeCmd (saveSettings newSettings) )
 
-        Msgs.SettingsUpdateFoodPerDay amount ->
+        Msgs.SettingsUpdateFoodPerDay quantityString ->
             let
+                strippedString =
+                    String.filter isDigitOrDecimal quantityString
+
+                newQuantity =
+                    stringToFloatWithDefault quantityString 0.0
+
                 oldSettings = 
                     model.settings
                 newSettings =
-                    { oldSettings | dogFoodPerDay = Just amount }
+                    { oldSettings | dogFoodPerDay = Just newQuantity }
             in
                 ( model, batchWithTimeCmd (saveSettings newSettings) )
 
-        Msgs.SettingsUpdateMedicineInterval itemType interval ->
+        Msgs.SettingsUpdateMedicineInterval itemType intervalString ->
             let
+                strippedString =
+                    String.filter Char.isDigit intervalString
+
+                newInterval =
+                    stringToIntWithDefault intervalString 0
+
                 oldSettings = 
                     model.settings
+
                 newSettings =
                     case itemType of
                         Models.HeartwormMedicine ->
-                            { oldSettings | heartwormMedicineInterval = Just interval }
+                            { oldSettings | heartwormMedicineInterval = Just newInterval }
                         Models.FleaTickMedicine -> 
-                            { oldSettings | fleaTickMedicineInterval = Just interval }
+                            { oldSettings | fleaTickMedicineInterval = Just newInterval }
                         _ ->
                             oldSettings
             in
@@ -227,6 +237,13 @@ stringToFloatWithDefault string default =
     string
     |> String.filter isDigitOrDecimal
     |> String.toFloat
+    |> Result.withDefault default
+
+stringToIntWithDefault : String -> Int -> Int
+stringToIntWithDefault string default =
+    string
+    |> String.filter Char.isDigit
+    |> String.toInt
     |> Result.withDefault default
 
 isDigitOrDecimal : Char -> Bool

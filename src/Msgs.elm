@@ -3,7 +3,6 @@ module Msgs exposing (..)
 import Date exposing (Date)
 import Json.Encode exposing (Value)
 import Models exposing (Event, EventType, ItemType, RememberedPurchase, UnitSystem)
-import Time exposing (Time)
 
 type Msg
     = UpdateNowTime Date
@@ -16,10 +15,9 @@ type Msg
     | RetrievedDefaults Value
     | RetrievedEventFromDatabase Value
     | RetrievedSettings Value
-    | ToggleShowSettings
     | SettingsUpdateDogName String
     | SettingsUpdateUnitSystem UnitSystem
-    | SettingsUpdateFoodPerDay Float
-    | SettingsUpdateMedicineInterval ItemType Int
+    | SettingsUpdateFoodPerDay String
+    | SettingsUpdateMedicineInterval ItemType String
     | DefaultsUpdateNameForItemType ItemType String
     | DefaultsUpdateQuantityForItemType ItemType String

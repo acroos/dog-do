@@ -10,40 +10,89 @@ import Utils.StringUtils exposing (itemTypeToString, unitSystemToMassString)
 
 --- PUBLIC ---
 
-settingsPane : Bool -> Settings -> RememberedPurchases -> Html Msg
-settingsPane visible settings defaults =
+settingsPane : Settings -> RememberedPurchases -> Html Msg
+settingsPane settings defaults =
     let
-        displayClass =
-            if visible then
-                ""
-            else
-                "d-none"
+        content =
+            accordion settings defaults
     in
-        
-    div [ class ("shadow-lg position-absolute w-25 h-100 " ++ displayClass), id "settings-pane" ] 
-        [ settingsForm settings defaults ]
+        div [ class "modal fade"
+            , id "settingsModal"
+            , tabindex -1
+            , attribute "role" "dialog"
+            , attribute "aria-hidden" "true"
+            , attribute "aria-labelledby" "#purchaseModalLabel" ]
+            [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
+                [ div 
+                    [ class "modal-content" ] 
+                    [ content ]
+                ]
+            ]
 
 --- PRIVATE ---
 
-settingsForm : Settings -> RememberedPurchases -> Html Msg
-settingsForm settings defaults =
-    Html.form [ class "text-left px-3" ]
-        [ h2 [ class "text-primary text-center mt-4" ] [ text "Settings" ]
-        , dogInput settings.dogName
-        , unitSystemRadios settings.unitSystem
-        , h2 [ class "text-primary text-center" ] [ text "Defaults:" ]
-        , settingsDefaultsFormGroup Models.Food settings.unitSystem defaults.food
-        , settingsDefaultsFormGroup Models.HeartwormMedicine settings.unitSystem defaults.heartwormMedicine
-        , settingsDefaultsFormGroup Models.FleaTickMedicine settings.unitSystem defaults.fleaTickMedicine
-        , a 
-            [ class "btn btn-success float-right text-white"
-            , onClick Msgs.ToggleShowSettings
-            ] 
-            [ text "Done" ]
+accordion : Settings -> RememberedPurchases -> Html Msg
+accordion settings defaults =
+    div [ class "accordion", id "accordion" ]
+        [ settingsCard settings
+        , defaultsCard settings.unitSystem defaults
         ]
 
-dogInput : Maybe String -> Html Msg
-dogInput dogName =
+settingsCard : Settings -> Html Msg
+settingsCard settings =
+    card "Settings" True 
+        [ dogNameFormGroup settings.dogName
+        , unitSystemRadios settings.unitSystem
+        , dogFoodPerDayFormGroup settings.dogFoodPerDay settings.unitSystem
+        , medicineIntervalFormGroup Models.HeartwormMedicine settings.heartwormMedicineInterval
+        , medicineIntervalFormGroup Models.FleaTickMedicine settings.fleaTickMedicineInterval
+        ]
+
+defaultsCard : UnitSystem -> RememberedPurchases -> Html Msg
+defaultsCard unitSystem defaults =
+    card "Defaults" False 
+        [ defaultsFormGroup Models.Food unitSystem defaults.food
+        , defaultsFormGroup Models.HeartwormMedicine unitSystem defaults.heartwormMedicine
+        , defaultsFormGroup Models.FleaTickMedicine unitSystem defaults.fleaTickMedicine
+        ]
+
+card : String -> Bool -> List (Html Msg) -> Html Msg
+card kind show contents =
+    let
+        headerId = "heading" ++ kind
+        divId = "collapse" ++ kind
+        showClass =
+            if show then "show"
+            else ""
+        
+    in
+        div [ class "card" ]
+            [ div [ class "card-header", id headerId ]
+                [ h5 [ class "mb-0" ]
+                    [ button 
+                        [ class "btn btn-link"
+                        , type_ "button"
+                        , attribute "data-toggle" "collapse"
+                        , attribute "data-target" ("#" ++ divId)
+                        , attribute "aria-expanded" (String.toLower (toString show))
+                        , attribute "aria-controls" divId
+                        ]
+                        [ text kind ]
+                    ]
+                ]
+            , div 
+                [ class ("collapse " ++ showClass)
+                , id divId
+                , attribute "aria-labelledby" headerId
+                , attribute "data-parent" "#accordion"
+                ]
+                [ div [ class "card-body" ]
+                    contents
+                ]
+            ]
+
+dogNameFormGroup : Maybe String -> Html Msg
+dogNameFormGroup dogName =
     let
         valueOrPlaceholder = 
             case dogName of
@@ -59,11 +108,42 @@ dogInput dogName =
             , onFocusOut Msgs.SettingsUpdateDogName
             ]
     in
-        
-    div [ class "form-group" ]
-        [ label [ for "dogName" ] [ text "Dog Name:" ]
-        , input attrs []
-        ]
+        div [ class "form-group" ]
+            [ label [ for "dogName" ] [ text "Dog Name:" ]
+            , input attrs []
+            ]
+
+dogFoodPerDayFormGroup : Maybe Float -> UnitSystem -> Html Msg
+dogFoodPerDayFormGroup maybeFoodPerDay unitSystem =
+    let
+        inputId =
+            "dogFoodPerDay"
+        inputElement =
+            floatInputGroup
+                maybeFoodPerDay
+                (unitSystemToMassString unitSystem)
+                inputId
+                Msgs.SettingsUpdateFoodPerDay
+        labelText =
+            "Dog Food Per Day:"
+    in
+        formGroup inputId labelText inputElement
+
+medicineIntervalFormGroup : ItemType -> Maybe Int -> Html Msg
+medicineIntervalFormGroup itemType maybeInterval =
+    let
+        inputId =
+            (toString itemType) ++ "Interval"
+        inputElement =
+            intInputGroup
+                maybeInterval
+                "day(s)"
+                inputId
+                (Msgs.SettingsUpdateMedicineInterval itemType)
+        labelText =
+            (itemTypeToString itemType) ++ " Interval:"
+    in
+        formGroup inputId labelText inputElement
 
 unitSystemRadios : UnitSystem -> Html Msg
 unitSystemRadios unitSystem =
@@ -111,8 +191,90 @@ unitSystemRadios unitSystem =
                 ]
             ]
 
-settingsDefaultsFormGroup : ItemType -> UnitSystem -> RememberedPurchase -> Html Msg
-settingsDefaultsFormGroup itemType unitSystem remembered =
+formGroup : String -> String -> Html Msg -> Html Msg
+formGroup inputId labelText inputElement =
+    div [ class "form-group" ]
+        [ label [ for inputId ] [ text labelText ]
+        , inputElement
+        ]
+
+floatInputGroup : Maybe Float -> String -> String -> (String -> Msg) -> Html Msg
+floatInputGroup maybeValue unitName inputId focusOutMsg =
+    let
+        floatPlaceholder =
+            "1.0"
+        floatInputAttrs =
+            [ type_ "number"
+            , step "0.1"
+            ]
+    in
+        inputGroup
+            maybeValue
+            floatInputAttrs
+            floatPlaceholder
+            unitName
+            inputId
+            focusOutMsg
+
+intInputGroup : Maybe Int -> String -> String -> (String -> Msg) -> Html Msg
+intInputGroup maybeValue unitName inputId focusOutMsg =
+    let
+        intPlaceholder =
+            "10"
+        intInputAttrs =
+            [ type_ "number"
+            , step "1"
+            ]
+    in
+        inputGroup
+            maybeValue
+            intInputAttrs
+            intPlaceholder
+            unitName
+            inputId
+            focusOutMsg
+
+stringInputGroup : Maybe String -> String -> String -> String -> (String -> Msg) -> Html Msg
+stringInputGroup maybeValue stringPlaceholder unitName inputId focusOutMsg =
+    let
+        stringInputAttrs =
+            [ type_ "text" ]
+    in
+        inputGroup
+            maybeValue
+            stringInputAttrs
+            stringPlaceholder
+            unitName
+            inputId
+            focusOutMsg
+
+inputGroup : Maybe a -> List (Attribute Msg) -> String -> String -> String -> (String -> Msg) -> Html Msg
+inputGroup maybeValue specificAttrs inputPlaceholder unitName inputId focusOutMsg =
+    let
+        valueOrPlaceholder =
+            case maybeValue of
+                Just quantity ->
+                    (value (toString quantity))
+                Nothing ->
+                    (placeholder inputPlaceholder)
+
+        baseAttrs =
+            [ class "form-control"
+            , id inputId
+            , onFocusOut focusOutMsg
+            , valueOrPlaceholder
+            ]
+        
+        inputAttrs = List.append baseAttrs specificAttrs
+    in
+        div [ class "input-group" ]
+            [ input inputAttrs []
+            , div [ class "input-group-append" ]
+                [ div [ class "input-group-text" ] [ text unitName ] ]
+            ]
+
+defaultsFormGroup : ItemType -> UnitSystem -> RememberedPurchase -> Html Msg
+defaultsFormGroup itemType unitSystem remembered =
     let
         nameLabel =
             (itemTypeToString itemType) ++ " Name:"
@@ -146,7 +308,7 @@ settingsDefaultsFormGroup itemType unitSystem remembered =
             ]
         
         quantityAttrs =
-            [ type_ "text"
+            [ type_ "number"
             , class "form-control"
             , id "itemQuantity"
             , onFocusOut (Msgs.DefaultsUpdateQuantityForItemType itemType)
@@ -159,12 +321,6 @@ settingsDefaultsFormGroup itemType unitSystem remembered =
                 , div [ class "input-group-append" ]
                     [ div [ class "input-group-text" ] [ text quantityUnits ] ]
                 ]
-
-        -- <div class="input-group mb-2">
-        --  <div class="input-group-prepend">
-        --       <div class="input-group-text">@</div>
-        --  </div>
-        --  <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Username">
     in
         div [ ]
             [ div [ class "form-group" ]

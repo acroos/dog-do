@@ -18,7 +18,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ text model.error
-        , settingsPane model.showSettings model.settings model.defaultPurchases
+        , settingsPane model.settings model.defaultPurchases
         , settingsIcon
         , header
         , container (columns model)
@@ -29,12 +29,19 @@ view model =
 
 settingsIcon : Html Msg
 settingsIcon =
-    a 
-        [ class "position-absolute ml-2"
-        , onClick Msgs.ToggleShowSettings
-        , id "settings-icon"
-        ] 
-        [ img [ src "./settings.png" ] [] ]
+    let
+        buttonAttributes =
+            [ attribute "data-toggle" "modal" 
+            , attribute "data-target" "#purchaseModal"
+            ]
+    in
+        button
+            [ attribute "data-toggle" "modal" 
+            , attribute "data-target" "#settingsModal"
+            , class "btn btn-link position-absolute ml-2"
+            , id "settings-icon"
+            ] 
+            [ img [ src "./settings.png" ] [] ]
 
 header : Html Msg
 header =    

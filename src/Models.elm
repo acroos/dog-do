@@ -6,7 +6,6 @@ type alias Model =
     { settings: Settings
     , events : List Event
     , error : String
-    , showSettings : Bool
     , pendingEvent : Maybe Event
     , lastPurchases : RememberedPurchases
     , defaultPurchases : RememberedPurchases
@@ -18,7 +17,6 @@ initialModel =
     { settings = emptySettings
     , events = []
     , error = ""
-    , showSettings = False
     , pendingEvent = Nothing
     , lastPurchases = emptyRememberedPurchases
     , defaultPurchases = emptyRememberedPurchases
