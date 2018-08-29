@@ -2,11 +2,9 @@ module Update exposing (update)
 
 import Char
 import Commands exposing (..)
-import Date exposing (Date)
 import Json.Decode as Decode
 import Msgs exposing (Msg)
 import Models exposing (..)
-import Task exposing (Task)
 import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases, decodeSettings)
 
 --- PUBLIC ---
@@ -14,26 +12,23 @@ import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases, decodeS
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Msgs.NewPurchaseEventRequestTimestamp itemType name quantity ->
-            ( model, Task.perform (Msgs.NewPurchaseEventReceiveTimestamp itemType name quantity) Date.now)
+        Msgs.UpdateNowTime date ->
+            ( { model | now = date }, Cmd.none )
 
-        Msgs.NewAdministerEventRequestTimestamp itemType name ->
-            ( model, Task.perform (Msgs.NewAdministerEventReceiveTimestamp itemType name) Date.now)
-
-        Msgs.NewPurchaseEventReceiveTimestamp itemType name quantity date ->
+        Msgs.NewPendingPurchaseEvent itemType name quantity ->
             let
-                purchaseEvent = (createPurchaseEvent itemType name quantity date)
+                purchaseEvent = (createPurchaseEvent itemType name quantity model.now)
             in
-                ( { model | pendingEvent = Just purchaseEvent }, Cmd.none )
+                ( { model | pendingEvent = Just purchaseEvent }, updateNowTime )
 
-        Msgs.NewAdministerEventReceiveTimestamp itemType name date ->
+        Msgs.NewAdministerEvent itemType name ->
             let
-                administerEvent = (createAdministerEvent itemType name date)
+                administerEvent = (createAdministerEvent itemType name model.now)
             in
-                ( model, (saveEvent administerEvent) )
+                ( model,  batchWithTimeCmd (saveEvent administerEvent) )
 
         Msgs.DeletePendingEvent ->
-            ( { model | pendingEvent = Nothing }, Cmd.none)
+            ( { model | pendingEvent = Nothing }, updateNowTime )
 
         Msgs.UpdatePendingEventItemName name ->
             let
@@ -44,7 +39,7 @@ update msg model =
                         Nothing ->
                             Nothing
             in                
-                ( { model | pendingEvent = newPendingEvent }, Cmd.none )
+                ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.UpdatePendingEventQuantity quantityString ->
             let
@@ -57,7 +52,7 @@ update msg model =
                         Nothing ->
                             Nothing
             in                
-                ( { model | pendingEvent = newPendingEvent }, Cmd.none )
+                ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.SavePendingEvent ->
             let
@@ -75,33 +70,33 @@ update msg model =
             in
                 case event of
                     Just theEvent ->
-                        ( { model | pendingEvent = Nothing, lastPurchases = lastPurchases }, saveEvent theEvent )
+                        ( { model | pendingEvent = Nothing, lastPurchases = lastPurchases }, batchWithTimeCmd (saveEvent theEvent) )
                     Nothing ->
-                        ( model, Cmd.none )
+                        ( model, updateNowTime )
 
         Msgs.RetrievedDefaults value ->
             case Decode.decodeValue decodeRememberedPurchases value of
                 Ok defaults ->
-                    ( { model | defaultPurchases = defaults }, Cmd.none )
+                    ( { model | defaultPurchases = defaults }, updateNowTime )
                 Err err ->
-                    ( { model | error = ("RetrievedDefaults: " ++ err) }, Cmd.none )
+                    ( { model | error = ("RetrievedDefaults: " ++ err) }, updateNowTime )
 
         Msgs.RetrievedEventFromDatabase event ->
             case Decode.decodeValue decodeEvent event of
                 Ok val ->
-                    ( { model | events = (val :: model.events) }, Cmd.none )
+                    ( { model | events = (val :: model.events) }, updateNowTime )
                 Err err ->
-                    ( { model | error = ("RetrievedEventFromDatabase: " ++ err) }, Cmd.none )
+                    ( { model | error = ("RetrievedEventFromDatabase: " ++ err) }, updateNowTime )
 
         Msgs.RetrievedSettings value ->
             case Decode.decodeValue decodeSettings value of
                 Ok settings ->
-                    ( { model | settings = settings }, Cmd.none )
+                    ( { model | settings = settings }, updateNowTime )
                 Err err ->
-                    ( { model | error = ("RetrievedSettings: " ++ err) }, Cmd.none )
+                    ( { model | error = ("RetrievedSettings: " ++ err) }, updateNowTime )
 
         Msgs.ToggleShowSettings ->
-            ( { model | showSettings = not model.showSettings }, Cmd.none )
+            ( { model | showSettings = not model.showSettings }, updateNowTime )
 
         Msgs.SettingsUpdateDogName dogName ->
             let
@@ -110,7 +105,7 @@ update msg model =
                 newSettings =
                     { oldSettings | dogName = Just dogName }
             in
-                ( model, (saveSettings newSettings) )
+                ( model, batchWithTimeCmd (saveSettings newSettings) )
 
         Msgs.SettingsUpdateUnitSystem unitSystem ->
             let
@@ -119,7 +114,7 @@ update msg model =
                 newSettings =
                     { oldSettings | unitSystem = unitSystem }
             in
-                ( model, (saveSettings newSettings) )
+                ( model, batchWithTimeCmd (saveSettings newSettings) )
 
         Msgs.SettingsUpdateFoodPerDay amount ->
             let
@@ -128,7 +123,7 @@ update msg model =
                 newSettings =
                     { oldSettings | dogFoodPerDay = Just amount }
             in
-                ( model, (saveSettings newSettings) )
+                ( model, batchWithTimeCmd (saveSettings newSettings) )
 
         Msgs.SettingsUpdateMedicineInterval itemType interval ->
             let
@@ -143,7 +138,7 @@ update msg model =
                         _ ->
                             oldSettings
             in
-                ( model, (saveSettings newSettings) )
+                ( model, batchWithTimeCmd (saveSettings newSettings) )
 
         Msgs.DefaultsUpdateNameForItemType itemType name ->
             let
@@ -159,7 +154,7 @@ update msg model =
                 newDefaults =
                     updateDefaults oldDefaults itemType updatedDefault
             in
-                ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
+                ( { model | defaultPurchases = newDefaults }, batchWithTimeCmd (saveDefaults newDefaults) )
 
         Msgs.DefaultsUpdateQuantityForItemType itemType quantityString ->
             let
@@ -181,7 +176,7 @@ update msg model =
                 newDefaults =
                     updateDefaults oldDefaults itemType updatedDefault
             in
-                ( { model | defaultPurchases = newDefaults }, (saveDefaults newDefaults) )
+                ( { model | defaultPurchases = newDefaults }, batchWithTimeCmd (saveDefaults newDefaults) )
 
 --- PRIVATE ---
 

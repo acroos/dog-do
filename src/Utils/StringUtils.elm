@@ -1,6 +1,6 @@
 module Utils.StringUtils exposing (..)
 
-import Models exposing (EventType, ItemType)
+import Models exposing (EventType, ItemType, UnitSystem)
 
 --- PUBLIC ---
 
@@ -20,3 +20,11 @@ itemTypeToString itemType =
             "Flea/Tick Medicine"
         Models.Food ->
             "Food"
+
+unitSystemToMassString : UnitSystem -> String
+unitSystemToMassString unitSystem =
+    case unitSystem of
+        Models.Imperial ->
+            "lb"
+        Models.Metric ->
+            "kg"

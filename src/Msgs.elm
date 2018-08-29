@@ -2,13 +2,13 @@ module Msgs exposing (..)
 
 import Date exposing (Date)
 import Json.Encode exposing (Value)
-import Models exposing (Event, ItemType, RememberedPurchase, UnitSystem)
+import Models exposing (Event, EventType, ItemType, RememberedPurchase, UnitSystem)
+import Time exposing (Time)
 
 type Msg
-    = NewPurchaseEventRequestTimestamp ItemType String Float
-    | NewAdministerEventRequestTimestamp ItemType String
-    | NewPurchaseEventReceiveTimestamp ItemType String Float Date
-    | NewAdministerEventReceiveTimestamp ItemType String Date
+    = UpdateNowTime Date
+    | NewPendingPurchaseEvent ItemType String Float
+    | NewAdministerEvent ItemType String
     | DeletePendingEvent
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String

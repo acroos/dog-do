@@ -6,7 +6,7 @@ import Html.Events exposing (onClick, onInput)
 import Models exposing (ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Settings)
 import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onChange, onFocusOut)
-import Utils.StringUtils exposing (itemTypeToString)
+import Utils.StringUtils exposing (itemTypeToString, unitSystemToMassString)
 
 --- PUBLIC ---
 
@@ -133,10 +133,7 @@ settingsDefaultsFormGroup itemType unitSystem remembered =
         
         quantityUnits = 
             if itemType == Models.Food then
-                if unitSystem == Models.Metric then
-                    "kg(s)"
-                else
-                    "lb(s)"
+                unitSystemToMassString unitSystem
             else
                 "dose(s)"
 

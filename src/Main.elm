@@ -1,16 +1,20 @@
 module Main exposing (..)
 
+import Commands exposing (updateNowTime)
+import Date
 import Html exposing (Html)
 import Models exposing (Model, initialModel)
 import Msgs exposing (Msg)
 import Ports exposing (..)
+import Task
+import Time exposing (every, hour)
 import Update exposing (update)
 import View exposing (view)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, Cmd.none )
+    ( initialModel, updateNowTime )
 
 
 subscriptions : Model -> Sub Msg

@@ -10,6 +10,7 @@ type alias Model =
     , pendingEvent : Maybe Event
     , lastPurchases : RememberedPurchases
     , defaultPurchases : RememberedPurchases
+    , now : Date
     }
 
 initialModel : Model
@@ -21,6 +22,7 @@ initialModel =
     , pendingEvent = Nothing
     , lastPurchases = emptyRememberedPurchases
     , defaultPurchases = emptyRememberedPurchases
+    , now = Date.fromTime 0
     }
 
 type EventType

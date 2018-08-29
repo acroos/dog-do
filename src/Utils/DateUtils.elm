@@ -1,8 +1,23 @@
-module Utils.DateUtils exposing (toIso8601String, toPrettyString)
+module Utils.DateUtils exposing (daysBetween, timeBetween, toIso8601String, toPrettyString)
 
 import Date exposing (Date)
+import Time exposing (Time, inHours)
 
 --- PUBLIC ---
+
+daysBetween : Date -> Date -> Float
+daysBetween date1 date2 =
+    (inHours (timeBetween date1 date2)) / 24
+
+timeBetween : Date -> Date -> Time
+timeBetween date1 date2 =
+    let
+        time1 =
+            Date.toTime <| date1
+        time2 =
+            Date.toTime <| date2
+    in
+        abs (time1 - time2)
 
 toIso8601String : Date -> String
 toIso8601String date =
