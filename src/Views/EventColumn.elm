@@ -9,6 +9,7 @@ import Models exposing (..)
 import Msgs exposing (Msg)
 import Utils.DateUtils exposing (daysBetween, timeBetween, toIso8601String, toPrettyString)
 import Utils.EventUtils exposing (..)
+import Utils.HtmlUtils exposing (empty)
 import Utils.ListUtils exposing (sortEventsByDateDescending)
 import Utils.StringUtils exposing (..)
 import Views.Shared exposing (divCol, divRow)
@@ -157,8 +158,14 @@ lastEvent events =
 
 eventList : UnitSystem -> List Event -> Html Msg
 eventList unitSystem events =
-    table [ class "table mt-3" ]
-        [ tbody [] (List.map (eventItem unitSystem) events) ]
+    if (List.length events) > 0 then
+        table [ class "table mt-3" ]
+            [ thead []
+                [ th [ class "text-center" ] [ text "History" ] ]
+            , tbody [] (List.map (eventItem unitSystem) events) 
+            ]
+    else
+        empty
 
 eventItem :  UnitSystem -> Event -> Html Msg
 eventItem unitSystem event =
