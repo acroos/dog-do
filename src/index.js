@@ -9,7 +9,7 @@ if (!window.indexedDB) {
     window.alert("Your browser doesn't support a stable version of IndexedDB.  Long-term storage will not be enabled.  Please try a different browser.");
 }
 
-const dexieDb = new Dexie('Dev-DogDoDb' + Math.random().toString());
+const dexieDb = new Dexie('DogDoDb');
 
 dexieDb.version(2).stores({
     events: '++id, eventType, itemType, itemName, quantity, timestamp'
