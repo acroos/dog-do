@@ -13,7 +13,7 @@ import Utils.StringUtils exposing (itemTypeToString, unitSystemToMassString)
 settingsPane : Settings -> RememberedPurchases -> Html Msg
 settingsPane settings defaults =
     let
-        content =
+        modalBody =
             accordion settings defaults
     in
         div [ class "modal fade"
@@ -21,15 +21,29 @@ settingsPane settings defaults =
             , tabindex -1
             , attribute "role" "dialog"
             , attribute "aria-hidden" "true"
-            , attribute "aria-labelledby" "#purchaseModalLabel" ]
+            , attribute "aria-labelledby" "#settingsModalLabel" ]
             [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
                 [ div 
                     [ class "modal-content" ] 
-                    [ content ]
+                    [ modalHeader, modalBody ]
                 ]
             ]
 
 --- PRIVATE ---
+
+modalHeader : Html Msg
+modalHeader =
+    div [ class "modal-header" ]
+        [ h5 [ class "modal-title", id "settingsModalLabel" ]
+            [ text "Settings/Defaults" ]
+        , button 
+            [ type_ "button"
+            , class "close"
+            , attribute "data-dismiss" "modal"
+            , attribute "aria-label" "Close"
+            ]
+            [ span [ attribute "aria-hidden" "true" ] [ text "x" ] ]
+        ]
 
 accordion : Settings -> RememberedPurchases -> Html Msg
 accordion settings defaults =

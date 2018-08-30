@@ -29,19 +29,13 @@ view model =
 
 settingsIcon : Html Msg
 settingsIcon =
-    let
-        buttonAttributes =
-            [ attribute "data-toggle" "modal" 
-            , attribute "data-target" "#purchaseModal"
-            ]
-    in
-        button
-            [ attribute "data-toggle" "modal" 
-            , attribute "data-target" "#settingsModal"
-            , class "btn btn-link position-absolute ml-2"
-            , id "settings-icon"
-            ] 
-            [ img [ src "./settings.png" ] [] ]
+    button
+        [ attribute "data-toggle" "modal" 
+        , attribute "data-target" "#settingsModal"
+        , class "btn btn-link position-absolute ml-2"
+        , id "settings-icon"
+        ] 
+        [ img [ src "./settings.png" ] [] ]
 
 header : Html Msg
 header =    
