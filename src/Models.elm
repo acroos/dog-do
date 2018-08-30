@@ -7,8 +7,7 @@ type alias Model =
     , events : List Event
     , error : String
     , pendingEvent : Maybe Event
-    , lastPurchases : RememberedPurchases
-    , defaultPurchases : RememberedPurchases
+    , defaultPurchases : Defaults
     , now : Date
     }
 
@@ -18,8 +17,7 @@ initialModel =
     , events = []
     , error = ""
     , pendingEvent = Nothing
-    , lastPurchases = emptyRememberedPurchases
-    , defaultPurchases = emptyRememberedPurchases
+    , defaultPurchases = emptyDefaults
     , now = Date.fromTime 0
     }
 
@@ -44,13 +42,13 @@ type alias Event =
     , timestamp : Date
     }
 
-type alias RememberedPurchases =
-    { food : RememberedPurchase
-    , heartwormMedicine : RememberedPurchase
-    , fleaTickMedicine : RememberedPurchase
+type alias Defaults =
+    { food : EditableEventData
+    , heartwormMedicine : EditableEventData
+    , fleaTickMedicine : EditableEventData
     }
 
-type alias RememberedPurchase =
+type alias EditableEventData =
     { name : Maybe String
     , quantity : Maybe Float
     }
@@ -106,15 +104,15 @@ updateEventQuantity currentEvent newQuantity =
     , timestamp = currentEvent.timestamp
     }
 
-emptyRememberedPurchases : RememberedPurchases
-emptyRememberedPurchases =
-    { food = emptyRememberedPurchase
-    , heartwormMedicine = emptyRememberedPurchase
-    , fleaTickMedicine = emptyRememberedPurchase
+emptyDefaults : Defaults
+emptyDefaults =
+    { food = emptyEditableEventData
+    , heartwormMedicine = emptyEditableEventData
+    , fleaTickMedicine = emptyEditableEventData
     }
 
-emptyRememberedPurchase : RememberedPurchase
-emptyRememberedPurchase =
+emptyEditableEventData : EditableEventData
+emptyEditableEventData =
     { name = Nothing, quantity = Nothing }
 
 emptySettings : Settings

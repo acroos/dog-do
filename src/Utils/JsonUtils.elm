@@ -1,8 +1,8 @@
 module Utils.JsonUtils exposing 
     ( decodeEvent
     , encodeEvent
-    , decodeRememberedPurchases
-    , encodeRememberedPurchases
+    , decodeDefaults
+    , encodeDefaults
     , decodeSettings
     , encodeSettings
     )
@@ -34,20 +34,20 @@ decodeEvent =
         (Decode.field "quantity" Decode.float)
         (Decode.field "timestamp" dateDecoder)
 
-encodeRememberedPurchases : RememberedPurchases -> Value
-encodeRememberedPurchases remembered =
+encodeDefaults : Defaults -> Value
+encodeDefaults remembered =
     object
-        [ ("food", (encodeRememberedPurchase remembered.food))
-        , ("heartwormMedicine", (encodeRememberedPurchase remembered.heartwormMedicine))
-        , ("fleaTickMedicine", (encodeRememberedPurchase remembered.fleaTickMedicine))
+        [ ("food", (encodeEditableEventData remembered.food))
+        , ("heartwormMedicine", (encodeEditableEventData remembered.heartwormMedicine))
+        , ("fleaTickMedicine", (encodeEditableEventData remembered.fleaTickMedicine))
         ]
 
-decodeRememberedPurchases : Decode.Decoder RememberedPurchases
-decodeRememberedPurchases =
-    Decode.map3 RememberedPurchases
-        (Decode.field "food" decodeRememberedPurchase)
-        (Decode.field "heartwormMedicine" decodeRememberedPurchase)
-        (Decode.field "fleaTickMedicine" decodeRememberedPurchase)
+decodeDefaults : Decode.Decoder Defaults
+decodeDefaults =
+    Decode.map3 Defaults
+        (Decode.field "food" decodeEditableEventData)
+        (Decode.field "heartwormMedicine" decodeEditableEventData)
+        (Decode.field "fleaTickMedicine" decodeEditableEventData)
 
 encodeSettings : Settings -> Value
 encodeSettings settings =
@@ -108,14 +108,14 @@ decodeSettings =
 
 --- PRIVATE ---
 
-decodeRememberedPurchase : Decode.Decoder RememberedPurchase
-decodeRememberedPurchase =
-    Decode.map2 RememberedPurchase
+decodeEditableEventData : Decode.Decoder EditableEventData
+decodeEditableEventData =
+    Decode.map2 EditableEventData
         (Decode.maybe (Decode.field "name" Decode.string))
         (Decode.maybe (Decode.field "quantity" Decode.float))
 
-encodeRememberedPurchase : RememberedPurchase -> Value
-encodeRememberedPurchase remembered =
+encodeEditableEventData : EditableEventData -> Value
+encodeEditableEventData remembered =
     let
         nameVal = 
             case remembered.name of

@@ -1,11 +1,11 @@
 module Commands exposing (..)
 
 import Date exposing (now)
-import Models exposing (Event, RememberedPurchases, Settings)
+import Models exposing (Event, Defaults, Settings)
 import Msgs exposing (Msg)
 import Ports
 import Task exposing (perform)
-import Utils.JsonUtils exposing (encodeEvent, encodeRememberedPurchases, encodeSettings)
+import Utils.JsonUtils exposing (encodeEvent, encodeDefaults, encodeSettings)
 
 batchWithTimeCmd : Cmd Msg -> Cmd Msg
 batchWithTimeCmd cmd =
@@ -19,9 +19,9 @@ saveSettings : Settings -> Cmd Msg
 saveSettings settings =
     Ports.saveSettings (encodeSettings settings)
 
-saveDefaults : RememberedPurchases -> Cmd Msg
+saveDefaults : Defaults -> Cmd Msg
 saveDefaults defaults =
-    Ports.saveDefaults (encodeRememberedPurchases defaults)
+    Ports.saveDefaults (encodeDefaults defaults)
 
 updateNowTime : Cmd Msg
 updateNowTime =

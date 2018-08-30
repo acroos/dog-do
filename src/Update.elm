@@ -5,7 +5,7 @@ import Commands exposing (..)
 import Json.Decode as Decode
 import Msgs exposing (Msg)
 import Models exposing (..)
-import Utils.JsonUtils exposing (decodeEvent, decodeRememberedPurchases, decodeSettings)
+import Utils.JsonUtils exposing (decodeEvent, decodeDefaults, decodeSettings)
 
 --- PUBLIC ---
 
@@ -55,27 +55,14 @@ update msg model =
                 ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.SavePendingEvent ->
-            let
-                event = model.pendingEvent
-                lastPurchases = 
-                    case event of 
-                        Just theEvent ->
-                            updateLastPurchase model.lastPurchases 
-                                            theEvent.itemType 
-                                            { name = Just theEvent.itemName
-                                            , quantity = Just theEvent.quantity
-                                            }
-                        Nothing ->
-                            model.lastPurchases
-            in
-                case event of
-                    Just theEvent ->
-                        ( { model | pendingEvent = Nothing, lastPurchases = lastPurchases }, batchWithTimeCmd (saveEvent theEvent) )
-                    Nothing ->
-                        ( model, updateNowTime )
+            case model.pendingEvent of
+                Just theEvent ->
+                    ( { model | pendingEvent = Nothing }, batchWithTimeCmd (saveEvent theEvent) )
+                Nothing ->
+                    ( model, updateNowTime )
 
         Msgs.RetrievedDefaults value ->
-            case Decode.decodeValue decodeRememberedPurchases value of
+            case Decode.decodeValue decodeDefaults value of
                 Ok defaults ->
                     ( { model | defaultPurchases = defaults }, updateNowTime )
                 Err err ->
@@ -190,7 +177,7 @@ update msg model =
 
 --- PRIVATE ---
 
-updateDefaults : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
+updateDefaults : Defaults -> ItemType -> EditableEventData -> Defaults
 updateDefaults oldDefaults itemType newDefault =
     case itemType of
         Models.Food ->
@@ -200,17 +187,7 @@ updateDefaults oldDefaults itemType newDefault =
         Models.FleaTickMedicine ->
             { oldDefaults | fleaTickMedicine = newDefault }
 
-updateLastPurchase : RememberedPurchases -> ItemType -> RememberedPurchase -> RememberedPurchases
-updateLastPurchase oldLastPurchases itemType lastPurchase =
-    case itemType of
-        Models.Food ->
-            { oldLastPurchases | food = lastPurchase }
-        Models.HeartwormMedicine ->
-            { oldLastPurchases | heartwormMedicine = lastPurchase }
-        Models.FleaTickMedicine ->
-            { oldLastPurchases | fleaTickMedicine = lastPurchase }
-
-fetchDefaultPurchase : Model -> ItemType -> RememberedPurchase
+fetchDefaultPurchase : Model -> ItemType -> EditableEventData
 fetchDefaultPurchase model itemType =
     case itemType of
         Models.Food ->

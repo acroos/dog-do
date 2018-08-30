@@ -3,14 +3,14 @@ module Views.Settings exposing (settingsPane)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Models exposing (ItemType, RememberedPurchases, RememberedPurchase, UnitSystem, Settings)
+import Models exposing (ItemType, Defaults, EditableEventData, UnitSystem, Settings)
 import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onChange, onFocusOut)
 import Utils.StringUtils exposing (itemTypeToString, unitSystemToMassString)
 
 --- PUBLIC ---
 
-settingsPane : Settings -> RememberedPurchases -> Html Msg
+settingsPane : Settings -> Defaults -> Html Msg
 settingsPane settings defaults =
     let
         modalBody =
@@ -45,7 +45,7 @@ modalHeader =
             [ span [ attribute "aria-hidden" "true" ] [ text "x" ] ]
         ]
 
-accordion : Settings -> RememberedPurchases -> Html Msg
+accordion : Settings -> Defaults -> Html Msg
 accordion settings defaults =
     div [ class "accordion", id "accordion" ]
         [ settingsCard settings
@@ -62,7 +62,7 @@ settingsCard settings =
         , medicineIntervalFormGroup Models.FleaTickMedicine settings.fleaTickMedicineInterval
         ]
 
-defaultsCard : UnitSystem -> RememberedPurchases -> Html Msg
+defaultsCard : UnitSystem -> Defaults -> Html Msg
 defaultsCard unitSystem defaults =
     card "Defaults" False 
         [ defaultsFormGroup Models.Food unitSystem defaults.food
@@ -287,7 +287,7 @@ inputGroup maybeValue specificAttrs inputPlaceholder unitName inputId focusOutMs
                 [ div [ class "input-group-text" ] [ text unitName ] ]
             ]
 
-defaultsFormGroup : ItemType -> UnitSystem -> RememberedPurchase -> Html Msg
+defaultsFormGroup : ItemType -> UnitSystem -> EditableEventData -> Html Msg
 defaultsFormGroup itemType unitSystem remembered =
     let
         nameLabel =

@@ -2,7 +2,7 @@ module Msgs exposing (..)
 
 import Date exposing (Date)
 import Json.Encode exposing (Value)
-import Models exposing (Event, EventType, ItemType, RememberedPurchase, UnitSystem)
+import Models exposing (Event, EventType, ItemType, EditableEventData, UnitSystem)
 
 type Msg
     = UpdateNowTime Date
