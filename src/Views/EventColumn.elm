@@ -30,11 +30,25 @@ column itemType model =
                 Models.FleaTickMedicine ->
                     model.defaultPurchases.fleaTickMedicine
 
+        mostRecentPurchaseEventForType =
+            model.events
+            |> List.filter (\e -> e.eventType == Models.PurchaseEvent)
+            |> List.filter (\e -> e.itemType == itemType)
+            |> lastEvent
+
+        mostRecentName =
+            mostRecentPurchaseEventForType
+            |> andThen (\e -> Just e.itemName)
+        
+        mostRecentQuantity =
+            mostRecentPurchaseEventForType
+            |> andThen (\e -> Just e.quantity)
+
         name =
-            nameFromDefaultAndLast default.name Nothing
+            nameFromDefaultAndLast default.name mostRecentName
 
         quantity = 
-            quantityFromDefaultAndLast default.quantity Nothing
+            quantityFromDefaultAndLast default.quantity mostRecentQuantity
 
         events =
             List.filter (\e -> e.itemType == itemType) model.events
