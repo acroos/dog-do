@@ -6,12 +6,13 @@ import Models exposing (Event, EventType, ItemType, EditableEventData, UnitSyste
 
 type Msg
     = UpdateNowTime Date
-    | NewPendingPurchaseEvent ItemType String Float
+    | NewPendingPurchaseEvent ItemType (Maybe String) (Maybe Float)
     | NewAdministerEvent ItemType String
     | DeletePendingEvent
+    | UpdatePendingEventItemType ItemType
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String
-    | SavePendingEvent
+    | SavePendingEvent ItemType String Float
     | RetrievedDefaults Value
     | RetrievedEventFromDatabase Value
     | RetrievedSettings Value

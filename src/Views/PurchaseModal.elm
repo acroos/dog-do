@@ -3,65 +3,42 @@ module Views.PurchaseModal exposing (purchaseModal)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Models exposing (Event, ItemType)
+import Models exposing (PendingEvent, ItemType)
 import Msgs exposing (Msg)
 import Utils.HtmlUtils exposing (onFocusOut)
-import Utils.StringUtils exposing (itemTypeToString)
+import Utils.StringUtils exposing (maybeItemTypeToString)
 
 --- PUBLIC ---
 
-purchaseModal : Maybe Event -> Html Msg
+purchaseModal : PendingEvent -> Html Msg
 purchaseModal event =
-    let
-        content = 
-            case event of
-                Just theEvent ->
-                    modalContent theEvent
-                Nothing ->
-                    [ div [] [] ]
-    in
-        div [ class "modal fade"
-            , id "purchaseModal"
-            , tabindex -1
-            , attribute "role" "dialog"
-            , attribute "aria-hidden" "true"
-            , attribute "aria-labelledby" "#purchaseModalLabel" ]
-            [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
-                [ div 
-                    [ class "modal-content" ] 
-                    content
-                ]
-            ]
-
---- PRIVATE ---
-
-modalContent : Event -> List (Html Msg)
-modalContent event =
-        [ modalHeader event.itemType
-        , modalBody event
-        , div [ class "modal-footer" ]
-            [ button 
-                [ type_ "button"
-                , class "btn btn-secondary"
-                , onClick Msgs.DeletePendingEvent
-                , attribute "data-dismiss" "modal"
-                ]
-                [ text "Close" ]
-            , button 
-                [ type_ "button"
-                , class "btn btn-primary"
-                , onClick Msgs.SavePendingEvent
-                , attribute "data-dismiss" "modal"
-                ]
-                [ text "Save" ]
+    div [ class "modal fade"
+        , id "purchaseModal"
+        , tabindex -1
+        , attribute "role" "dialog"
+        , attribute "aria-hidden" "true"
+        , attribute "aria-labelledby" "#purchaseModalLabel" ]
+        [ div [ class "modal-dialog modal-dialog-centered", attribute "role" "document" ]
+            [ div 
+                [ class "modal-content" ] 
+                (modalContent event)
             ]
         ]
 
-modalHeader : ItemType -> Html Msg
+--- PRIVATE ---
+
+modalContent : PendingEvent -> List (Html Msg)
+modalContent event =
+    [ modalHeader event.itemType
+    , modalBody event
+    , modalFooter event
+    ]
+
+modalHeader : Maybe ItemType -> Html Msg
 modalHeader itemType =
     div [ class "modal-header" ]
         [ h5 [ class "modal-title", id "purchaseModalLabel" ]
-            [ text ("Purchase " ++ (itemTypeToString itemType)) ]
+            [ text ("Purchase " ++ (maybeItemTypeToString itemType)) ]
         , button 
             [ type_ "button"
             , class "close"
@@ -71,16 +48,31 @@ modalHeader itemType =
             [ span [ attribute "aria-hidden" "true" ] [ text "x" ] ]
         ]
 
-modalBody : Event -> Html Msg
+modalBody : PendingEvent -> Html Msg
 modalBody event = 
+    let
+        nameValueOrPlaceholder =
+            case event.editableData.name of
+                Just theName ->
+                    value theName
+                Nothing ->
+                    placeholder "Generic Brand"
+        quantityValueOrPlaceholder =
+            case event.editableData.quantity of
+                Just theQuantity ->
+                    value (toString theQuantity)
+                Nothing ->
+                    placeholder "1.0"
+    in
+
     div [ class "modal-body" ]
         [ Html.form [ class "text-left px-3" ]
             [ div [ class "form-group" ]
-                [ label [ for "itemName" ] [ text ((itemTypeToString event.itemType) ++ " Name:") ]
+                [ label [ for "itemName" ] [ text ((maybeItemTypeToString event.itemType) ++ " Name:") ]
                 , input 
                     [ type_ "text"
                     , class "form-control"
-                    , value event.itemName
+                    , nameValueOrPlaceholder
                     , id "itemName"
                     , onInput Msgs.UpdatePendingEventItemName
                     ] []
@@ -90,10 +82,40 @@ modalBody event =
                 , input
                     [ type_ "text"
                     , class "form-control"
-                    , value (toString event.quantity)
+                    , quantityValueOrPlaceholder
                     , id "itemQuantity"
                     , onFocusOut Msgs.UpdatePendingEventQuantity
                     ] []
                 ]
             ]
         ]
+
+modalFooter : PendingEvent -> Html Msg
+modalFooter event =
+    let
+        saveBtnAttributes =
+            case (event.itemType, event.editableData.name, event.editableData.quantity) of
+                (Just itemType, Just name, Just quantity) -> 
+                    [ type_ "button"
+                    , class ("btn btn-primary")
+                    , onClick (Msgs.SavePendingEvent itemType name quantity)
+                    , attribute "data-dismiss" "modal"
+                    ]
+                _ -> 
+                    [ type_ "button"
+                    , class ("btn btn-primary disabled")
+                    ]
+
+    in
+        div [ class "modal-footer" ]
+            [ button 
+                [ type_ "button"
+                , class "btn btn-secondary"
+                , onClick Msgs.DeletePendingEvent
+                , attribute "data-dismiss" "modal"
+                ]
+                [ text "Close" ]
+            , button 
+                saveBtnAttributes
+                [ text "Save" ]
+            ]

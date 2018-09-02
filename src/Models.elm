@@ -6,7 +6,7 @@ type alias Model =
     { settings: Settings
     , events : List Event
     , error : String
-    , pendingEvent : Maybe Event
+    , pendingEvent : PendingEvent
     , defaultPurchases : Defaults
     , now : Date
     }
@@ -16,7 +16,7 @@ initialModel =
     { settings = emptySettings
     , events = []
     , error = ""
-    , pendingEvent = Nothing
+    , pendingEvent = emptyPendingEvent
     , defaultPurchases = emptyDefaults
     , now = Date.fromTime 0
     }
@@ -40,6 +40,11 @@ type alias Event =
     , itemName : String
     , quantity : Float
     , timestamp : Date
+    }
+
+type alias PendingEvent =
+    { itemType : Maybe ItemType
+    , editableData : EditableEventData
     }
 
 type alias Defaults =
@@ -110,6 +115,10 @@ emptyDefaults =
     , heartwormMedicine = emptyEditableEventData
     , fleaTickMedicine = emptyEditableEventData
     }
+
+emptyPendingEvent : PendingEvent
+emptyPendingEvent =
+    { itemType = Nothing, editableData = emptyEditableEventData }
 
 emptyEditableEventData : EditableEventData
 emptyEditableEventData =

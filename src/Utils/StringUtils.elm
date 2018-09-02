@@ -11,6 +11,12 @@ eventTypeToString eventType =
     else
         "Adminstered"
 
+maybeItemTypeToString : Maybe ItemType -> String
+maybeItemTypeToString maybeItemType =
+    case maybeItemType of
+        Just itemType -> (itemTypeToString itemType)
+        Nothing -> ""
+
 itemTypeToString : ItemType -> String
 itemTypeToString itemType =
     case itemType of

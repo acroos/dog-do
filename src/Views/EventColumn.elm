@@ -68,25 +68,19 @@ column itemType model =
 
 --- PRIVATE ---
 
-nameFromDefaultAndLast : Maybe String -> Maybe String -> String
+nameFromDefaultAndLast : Maybe String -> Maybe String -> Maybe String
 nameFromDefaultAndLast default last =
-    valueFromDefaultLastAndFallback default last "Generic Brand"
+    valueFromDefaultLastAndFallback default last
 
-quantityFromDefaultAndLast : Maybe Float -> Maybe Float -> Float
+quantityFromDefaultAndLast : Maybe Float -> Maybe Float -> Maybe Float
 quantityFromDefaultAndLast default last =
-    valueFromDefaultLastAndFallback default last 1.0
+    valueFromDefaultLastAndFallback default last
 
-valueFromDefaultLastAndFallback : Maybe a -> Maybe a -> a -> a
-valueFromDefaultLastAndFallback default last fallback =
+valueFromDefaultLastAndFallback : Maybe a -> Maybe a -> Maybe a
+valueFromDefaultLastAndFallback default last =
     case default of
-        Just val ->
-            val
-        Nothing ->
-            case last of
-                Just val ->
-                    val
-                Nothing ->
-                    fallback
+        Just val -> (Just val)
+        Nothing -> last
 
 quantityInfo : List Event -> Settings -> ItemType -> Date -> Html Msg
 quantityInfo events settings itemType today =
@@ -234,7 +228,7 @@ blockButton message attributes clickMsg =
     in
         button buttonAttributes [ text message ]
 
-purchasedButton : ItemType -> String -> Float -> Html Msg
+purchasedButton : ItemType -> Maybe String -> Maybe Float -> Html Msg
 purchasedButton itemType name quantity =
     let
         buttonAttributes =
@@ -244,11 +238,17 @@ purchasedButton itemType name quantity =
     in
         blockButton "Purchased!" buttonAttributes (Msgs.NewPendingPurchaseEvent itemType name quantity) 
 
-administeredButton : ItemType -> String -> Html Msg
-administeredButton itemType name =
-    blockButton "Administered!" [] (Msgs.NewAdministerEvent itemType name)
+administeredButton : ItemType -> Maybe String -> Html Msg
+administeredButton itemType maybeName =
+    let
+        name =
+            case maybeName of
+                Just theName -> theName
+                Nothing -> "Unknown"
+    in
+        blockButton "Administered!" [] (Msgs.NewAdministerEvent itemType name)
 
-buttonRow : ItemType -> String -> Float -> Html Msg
+buttonRow : ItemType -> Maybe String -> Maybe Float -> Html Msg
 buttonRow itemType itemName itemQuantity =
     divRow 
         [ div [ class "col" ] [ (purchasedButton itemType itemName itemQuantity) ]

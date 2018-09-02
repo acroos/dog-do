@@ -7,7 +7,7 @@ module Utils.EventUtils exposing
 
 import Date exposing (Date)
 import Maybe exposing (andThen)
-import Models exposing (Event, EventType)
+import Models exposing (Event, EventType, PendingEvent)
 import Utils.DateUtils exposing (daysBetween)
 
 --- PUBLIC ---

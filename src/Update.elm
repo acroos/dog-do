@@ -15,11 +15,17 @@ update msg model =
         Msgs.UpdateNowTime date ->
             ( { model | now = date }, Cmd.none )
 
-        Msgs.NewPendingPurchaseEvent itemType name quantity ->
+        Msgs.NewPendingPurchaseEvent itemType maybeName maybeQuantity ->
             let
-                purchaseEvent = (createPurchaseEvent itemType name quantity model.now)
+                pendingEvent =
+                    { itemType = Just itemType
+                    , editableData =
+                        { name = maybeName
+                        , quantity = maybeQuantity
+                        }
+                    }
             in
-                ( { model | pendingEvent = Just purchaseEvent }, updateNowTime )
+                ( { model | pendingEvent = pendingEvent }, updateNowTime )
 
         Msgs.NewAdministerEvent itemType name ->
             let
@@ -28,38 +34,65 @@ update msg model =
                 ( model,  batchWithTimeCmd (saveEvent administerEvent) )
 
         Msgs.DeletePendingEvent ->
-            ( { model | pendingEvent = Nothing }, updateNowTime )
+            ( { model | pendingEvent = emptyPendingEvent }, updateNowTime )
+
+        Msgs.UpdatePendingEventItemType itemType ->
+            let
+                oldPendingEvent =
+                    model.pendingEvent
+                newPendingEvent =
+                    { oldPendingEvent | itemType = Just itemType }
+            in
+                ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.UpdatePendingEventItemName name ->
             let
+                oldPendingEvent =
+                    model.pendingEvent
+                oldPendingEventData = 
+                    oldPendingEvent.editableData
+                newPendingEventData = 
+                    { oldPendingEventData | name = Just name }
                 newPendingEvent = 
-                    case model.pendingEvent of
-                        Just theEvent ->
-                            Just (updateEventName theEvent name)
-                        Nothing ->
-                            Nothing
+                    { oldPendingEvent | editableData = newPendingEventData }
+
             in                
                 ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.UpdatePendingEventQuantity quantityString ->
             let
                 newQuantity = 
-                    quantityFloatFromStringWithEventDefault quantityString model.pendingEvent
-                newPendingEvent = 
-                    case model.pendingEvent of
-                        Just theEvent ->
-                            Just (updateEventQuantity theEvent newQuantity)
-                        Nothing ->
+                    case (String.toFloat quantityString) of
+                        Ok float ->
+                            Just float
+                        _ ->
                             Nothing
+                oldPendingEvent =
+                    model.pendingEvent
+                oldPendingEventData = 
+                    oldPendingEvent.editableData
+                newPendingEventData = 
+                    { oldPendingEventData | quantity = newQuantity }
+                newPendingEvent = 
+                    { oldPendingEvent | editableData = newPendingEventData }
             in                
                 ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
-        Msgs.SavePendingEvent ->
-            case model.pendingEvent of
-                Just theEvent ->
-                    ( { model | pendingEvent = Nothing }, batchWithTimeCmd (saveEvent theEvent) )
-                Nothing ->
-                    ( model, updateNowTime )
+        Msgs.SavePendingEvent itemType name quantity ->
+            let
+                oldPendingEvent =
+                    model.pendingEvent
+                
+                event =
+                    { eventType = Models.PurchaseEvent
+                    , timestamp = model.now
+                    , itemType = itemType
+                    , itemName = name
+                    , quantity = quantity
+                    }
+
+            in
+                ( { model | pendingEvent = emptyPendingEvent }, batchWithTimeCmd <| saveEvent <| event )
 
         Msgs.RetrievedDefaults value ->
             case Decode.decodeValue decodeDefaults value of

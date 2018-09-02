@@ -217,14 +217,9 @@ floatInputGroup maybeValue unitName inputId focusOutMsg =
     let
         floatPlaceholder =
             "1.0"
-        floatInputAttrs =
-            [ type_ "number"
-            , step "0.1"
-            ]
     in
         inputGroup
             maybeValue
-            floatInputAttrs
             floatPlaceholder
             unitName
             inputId
@@ -235,14 +230,9 @@ intInputGroup maybeValue unitName inputId focusOutMsg =
     let
         intPlaceholder =
             "10"
-        intInputAttrs =
-            [ type_ "number"
-            , step "1"
-            ]
     in
         inputGroup
             maybeValue
-            intInputAttrs
             intPlaceholder
             unitName
             inputId
@@ -250,20 +240,15 @@ intInputGroup maybeValue unitName inputId focusOutMsg =
 
 stringInputGroup : Maybe String -> String -> String -> String -> (String -> Msg) -> Html Msg
 stringInputGroup maybeValue stringPlaceholder unitName inputId focusOutMsg =
-    let
-        stringInputAttrs =
-            [ type_ "text" ]
-    in
-        inputGroup
-            maybeValue
-            stringInputAttrs
-            stringPlaceholder
-            unitName
-            inputId
-            focusOutMsg
+    inputGroup
+        maybeValue
+        stringPlaceholder
+        unitName
+        inputId
+        focusOutMsg
 
-inputGroup : Maybe a -> List (Attribute Msg) -> String -> String -> String -> (String -> Msg) -> Html Msg
-inputGroup maybeValue specificAttrs inputPlaceholder unitName inputId focusOutMsg =
+inputGroup : Maybe a -> String -> String -> String -> (String -> Msg) -> Html Msg
+inputGroup maybeValue inputPlaceholder unitName inputId focusOutMsg =
     let
         valueOrPlaceholder =
             case maybeValue of
@@ -272,14 +257,13 @@ inputGroup maybeValue specificAttrs inputPlaceholder unitName inputId focusOutMs
                 Nothing ->
                     (placeholder inputPlaceholder)
 
-        baseAttrs =
+        inputAttrs =
             [ class "form-control"
+            , type_ "text"
             , id inputId
             , onFocusOut focusOutMsg
             , valueOrPlaceholder
             ]
-        
-        inputAttrs = List.append baseAttrs specificAttrs
     in
         div [ class "input-group" ]
             [ input inputAttrs []
