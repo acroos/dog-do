@@ -113,7 +113,10 @@ foodAmountSummary maybeEvent maybeFoodPerDay unitSystem today =
                 Just amount -> (toString amount)
                 Nothing -> "n/a"
     in
-        amountSummaryList amountText daysText
+        amountSummaryList
+            [ amountRemainingListItem amountText
+            , daysTilPurchaseListItem daysText
+            ]
 
 medicineAmountSummary : List Event -> Maybe Int -> Date -> Html Msg
 medicineAmountSummary events maybeInterval today =
@@ -131,8 +134,13 @@ medicineAmountSummary events maybeInterval today =
                 Just theEvent ->
                     calculateMedicineDaysRemaining amountRemaining today maybeInterval theEvent
                 Nothing ->
-                    maybeInterval
-                    |> andThen (\i -> Just (i * amountRemaining))
+                    Maybe.map (\i -> i * amountRemaining) maybeInterval
+
+        daysToAdminister =
+            case lastAdministerEvent of
+                Just theEvent ->
+                    calculateDaysToNextAdminister today maybeInterval theEvent
+                Nothing -> Nothing
 
         amountText = 
             if amountRemaining < 0 then
@@ -146,17 +154,39 @@ medicineAmountSummary events maybeInterval today =
             case daysRemaining of
                 Just amount -> (toString amount)
                 Nothing -> "n/a"
-    in
-        amountSummaryList amountText daysText
 
-amountSummaryList : String -> String -> Html Msg
-amountSummaryList amountText daysText =
+        daysToAdministerText =
+            case daysToAdminister of
+                Just amount -> (toString amount)
+                Nothing -> "n/a"
+    in
+        amountSummaryList
+            [ amountRemainingListItem amountText
+            , daysTilPurchaseListItem daysText
+            , daysTilAdministerListItem daysToAdministerText
+            ]
+
+amountRemainingListItem : String -> Html Msg
+amountRemainingListItem amountString =
+    summaryListItem "Amount remaining" amountString
+
+daysTilPurchaseListItem : String -> Html Msg
+daysTilPurchaseListItem daysString =
+    summaryListItem "Days until next purchase" daysString
+
+daysTilAdministerListItem : String -> Html Msg
+daysTilAdministerListItem daysString =
+    summaryListItem "Days until next administer" daysString
+
+summaryListItem : String -> String -> Html Msg
+summaryListItem title value =
+    li [ class "list-group-item" ]
+        [ text (title ++ ": " ++ value) ]
+
+amountSummaryList : List (Html Msg) -> Html Msg
+amountSummaryList listItems =
     ul [ class "list-group list-group-flush text-center" ]
-        [ li [ class "list-group-item" ]
-            [ text ("Amount remaining: " ++ amountText) ]
-        , li [ class "list-group-item" ]
-            [ text ("Days until next purchase: " ++ daysText) ]
-        ]
+        listItems
 
 lastEvent : List Event -> Maybe Event
 lastEvent events =

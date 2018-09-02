@@ -3,6 +3,7 @@ module Utils.EventUtils exposing
     , calculateFoodDaysRemaining
     , calculateMedicineRemaining
     , calculateMedicineDaysRemaining
+    , calculateDaysToNextAdminister
     )
 
 import Date exposing (Date)
@@ -47,6 +48,14 @@ calculateMedicineDaysRemaining amountRemaining today maybeInterval lastAdministe
     in
         maybeInterval
         |> andThen (\i -> Just (calculateMedicineDaysRemainingHelper amountRemaining i daysSincePurchase))
+
+calculateDaysToNextAdminister : Date -> Maybe Int -> Event -> Maybe Int
+calculateDaysToNextAdminister today maybeInterval lastAdministerEvent =
+    let
+        daysSincePurchase =
+            floor (daysBetween lastAdministerEvent.timestamp today)
+    in
+        Maybe.map (\e -> e - daysSincePurchase) maybeInterval
 
 --- PRIVATE ---
 
