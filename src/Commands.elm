@@ -23,6 +23,10 @@ saveDefaults : Defaults -> Cmd Msg
 saveDefaults defaults =
     Ports.saveDefaults (encodeDefaults defaults)
 
+updateEvent : Event -> Cmd Msg
+updateEvent event =
+    Ports.updateEvent (encodeEvent event)
+
 updateNowTime : Cmd Msg
 updateNowTime =
     perform Msgs.UpdateNowTime now

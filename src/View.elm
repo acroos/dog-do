@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Models exposing (Model)
 import Msgs exposing (Msg)
+import Views.EditEventModal exposing (editEventModal)
 import Views.EventColumn exposing (column)
 import Views.PurchaseModal exposing (purchaseModal)
 import Views.Settings exposing (settingsPane)
@@ -20,6 +21,7 @@ view model =
         , header
         , container (columns model)
         , purchaseModal model.pendingEvent
+        , editEventModal model.eventToEdit
         ]
 
 --- PRIVATE ---
@@ -29,7 +31,7 @@ settingsIcon =
     button
         [ attribute "data-toggle" "modal" 
         , attribute "data-target" "#settingsModal"
-        , class "btn btn-link position-absolute ml-2"
+        , class "btn btn-link position-absolute ml-2 mt-2"
         , id "settings-icon"
         ] 
         [ img [ src "./settings.png" ] [] ]
@@ -37,9 +39,9 @@ settingsIcon =
 header : Html Msg
 header =    
     h1 [ class "display-2 text-center" ] 
-        [ img [ src "./pets.png" ] []
+        [ img [ src "./pets.png", class "mr-3" ] []
         , text "dog-do"
-        , img [ src "./pets.png" ] []
+        , img [ src "./pets.png", class "ml-3" ] []
         ]
 
 container : Html Msg -> Html Msg

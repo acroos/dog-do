@@ -13,9 +13,15 @@ type Msg
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String
     | SavePendingEvent ItemType String Float
+    | EditEvent Event
+    | UpdateEditedEventName String
+    | UpdateEditedEventQuantity String
+    | UpdateEditedEventTimestamp String
+    | SaveEditedEvent
     | RetrievedDefaults Value
     | RetrievedEventFromDatabase Value
     | RetrievedSettings Value
+    | DatabaseEventUpdated Value
     | SettingsUpdateDogName String
     | SettingsUpdateUnitSystem UnitSystem
     | SettingsUpdateFoodPerDay String

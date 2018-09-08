@@ -1,4 +1,4 @@
-module Utils.DateUtils exposing (daysBetween, timeBetween, toIso8601String, toPrettyString)
+module Utils.DateUtils exposing (daysBetween, timeBetween, toIso8601String, toMMDDYYYY, toPrettyString)
 
 import Date exposing (Date)
 import Time exposing (Time, inHours)
@@ -39,6 +39,17 @@ toIso8601String date =
             ]
     in
         String.join "" dateArray
+
+toMMDDYYYY : Date -> String
+toMMDDYYYY date =
+    let
+        dateArray =
+            [ toString <| Date.year <| date
+            , zeroPadInt2 <| extractMonthNum <| date
+            , zeroPadInt2 <| Date.day <| date
+            ]
+    in
+        String.join "-" dateArray
 
 toPrettyString : Date -> String
 toPrettyString date =

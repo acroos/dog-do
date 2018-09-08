@@ -32,7 +32,7 @@ dexieDb.events.orderBy('timestamp').toArray().then((events) => {
         }
         events
             .map(parseEventForElmInterop)
-            .forEach(e => app.ports.retrievedEventFromDatabase.send(e));
+            .forEach(e => app.ports.retrievedNewEvent.send(e));
 });
 
 app.ports.saveEvent.subscribe((event) => {
@@ -46,9 +46,12 @@ app.ports.saveEvent.subscribe((event) => {
         return;
     }
 
-    var parsedEvent = parseEventForDbStorage(event);
-    dexieDb.events.add(parsedEvent).then((id) => {
-        app.ports.retrievedEventFromDatabase.send(parseEventForElmInterop(event));
+    let newEvent = Object.assign({}, event);
+    newEvent.timestamp = Date.parse(event.timestamp);
+    delete newEvent.id;
+
+    dexieDb.events.add(newEvent).then((id) => {
+        app.ports.retrievedNewEvent.send(parseEventForElmInterop(event, id));
     });
 });
 
@@ -61,16 +64,31 @@ app.ports.saveDefaults.subscribe((defaults) => {
     localStorage.setItem('defaults', JSON.stringify(defaults));
 });
 
-const parseEventForDbStorage = (event) => {
-    var newEvent = Object.assign({}, event);
-    var parsedDate = Date.parse(event.timestamp);
-    newEvent.timestamp = parsedDate;
-    return newEvent;
-};
+app.ports.updateEvent.subscribe((event) => {
+    if (!window.indexedDB) {
+        console.log("IndexedDB Unavailable")
+        return;
+    }
 
-const parseEventForElmInterop = (event) => {
+    if (!dexieDb) {
+        console.log("DB access not granted");
+        return;
+    }
+
+    let newEvent = Object.assign({}, event);
+    newEvent.timestamp = Date.parse(event.timestamp);
+
+    dexieDb.events.update(event.id, newEvent).then((updated) => {
+        if (updated) {
+            app.ports.retrievedEventUpdate.send(parseEventForElmInterop(newEvent));
+        }
+    });
+});
+
+const parseEventForElmInterop = (event, id) => {
     var newEvent = Object.assign({}, event);
     var isoDate = new Date(event.timestamp).toISOString();
     newEvent.timestamp = isoDate;
+    newEvent.id = newEvent.id || id;
     return newEvent;
 };

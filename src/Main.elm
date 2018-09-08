@@ -21,8 +21,9 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ retrievedSettings Msgs.RetrievedSettings
-        , retrievedEventFromDatabase Msgs.RetrievedEventFromDatabase
+        , retrievedNewEvent Msgs.RetrievedEventFromDatabase
         , retrievedDefaults Msgs.RetrievedDefaults
+        , retrievedEventUpdate Msgs.DatabaseEventUpdated
         ]
 
 

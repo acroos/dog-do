@@ -216,7 +216,15 @@ eventItem unitSystem event =
     in
         tr [ class (eventClass ++ " shadow-sm p-3 m-1 rounded") ] 
             [ td [ class "text-left" ] 
-                [ text (eventText unitSystem event) ]
+                [ text (eventText unitSystem event)
+                , button 
+                    [ class "btn btn-link m-0 p-0 float-right"
+                    , attribute "data-toggle" "modal" 
+                    , attribute "data-target" "#editEventModal"
+                    , onClick (Msgs.EditEvent event)
+                    ] 
+                    [ img [ src "./edit.png" ] [] ]
+                ]
             ]
 
 eventText : UnitSystem -> Event -> String
