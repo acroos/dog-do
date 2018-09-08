@@ -8,17 +8,6 @@ h1 {
   font-size: 30px;
 }
 
-img {
-  margin: 20px 0;
-  max-width: 200px;
-}
-
 #settings-icon:hover {
   cursor: pointer;
-}
-
-#settings-pane {
-  background-color: #fff;
-  z-index: 9999;
-  border-right: 1px solid #293c4b;
 }

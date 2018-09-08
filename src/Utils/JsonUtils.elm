@@ -17,17 +17,25 @@ import Utils.DateUtils exposing (toIso8601String)
 
 encodeEvent : Event -> Value
 encodeEvent event =
-    object
-        [ ("eventType", (string (eventTypeToString event.eventType)))
-        , ("itemType", (string (itemTypeToString event.itemType)))
-        , ("itemName", (string event.itemName))
-        , ("quantity", (float event.quantity))
-        , ("timestamp", (encodeDate event.timestamp))
-        ]
+    let
+        idValue =
+            case event.id of
+                Just theId -> (int theId)
+                Nothing -> null
+    in
+        object
+            [ ("id", idValue)
+            , ("eventType", (string (eventTypeToString event.eventType)))
+            , ("itemType", (string (itemTypeToString event.itemType)))
+            , ("itemName", (string event.itemName))
+            , ("quantity", (float event.quantity))
+            , ("timestamp", (encodeDate event.timestamp))
+            ]
 
 decodeEvent : Decode.Decoder Event
 decodeEvent =
-    Decode.map5 Event
+    Decode.map6 Event
+        (Decode.maybe (Decode.field "id" Decode.int))
         (Decode.field "eventType" eventTypeDecoder)
         (Decode.field "itemType" itemTypeDecoder)
         (Decode.field "itemName" Decode.string)

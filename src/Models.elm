@@ -9,6 +9,7 @@ type alias Model =
     , pendingEvent : PendingEvent
     , defaultPurchases : Defaults
     , now : Date
+    , eventToEdit : Maybe Event
     }
 
 initialModel : Model
@@ -19,6 +20,7 @@ initialModel =
     , pendingEvent = emptyPendingEvent
     , defaultPurchases = emptyDefaults
     , now = Date.fromTime 0
+    , eventToEdit = Nothing
     }
 
 type EventType
@@ -35,7 +37,8 @@ type UnitSystem
     | Imperial
 
 type alias Event =
-    { eventType : EventType
+    { id : Maybe Int
+    , eventType : EventType
     , itemType : ItemType
     , itemName : String
     , quantity : Float
@@ -66,15 +69,6 @@ type alias Settings =
     , fleaTickMedicineInterval : Maybe Int
     }
 
-createPurchaseEvent : ItemType -> String -> Float -> Date -> Event
-createPurchaseEvent itemType itemName quantity date =
-    { eventType = PurchaseEvent
-    , itemType = itemType
-    , itemName = itemName
-    , quantity = quantity
-    , timestamp = date
-    }
-
 createAdministerEvent : ItemType -> String -> Date -> Event
 createAdministerEvent itemType itemName date =
     { eventType = AdministerEvent
@@ -82,6 +76,7 @@ createAdministerEvent itemType itemName date =
     , itemName = itemName
     , quantity = 1.0
     , timestamp = date
+    , id = Nothing
     }
 
 unitSystemFromString : String -> UnitSystem
@@ -98,6 +93,7 @@ updateEventName currentEvent newName =
     , itemName = newName
     , quantity = currentEvent.quantity
     , timestamp = currentEvent.timestamp
+    , id = currentEvent.id
     }
 
 updateEventQuantity : Event -> Float -> Event
@@ -107,6 +103,7 @@ updateEventQuantity currentEvent newQuantity =
     , itemName = currentEvent.itemName
     , quantity = newQuantity
     , timestamp = currentEvent.timestamp
+    , id = currentEvent.id
     }
 
 emptyDefaults : Defaults

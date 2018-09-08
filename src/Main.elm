@@ -23,6 +23,7 @@ subscriptions model =
         [ retrievedSettings Msgs.RetrievedSettings
         , retrievedEventFromDatabase Msgs.RetrievedEventFromDatabase
         , retrievedDefaults Msgs.RetrievedDefaults
+        , databaseEventUpdated Msgs.DatabaseEventUpdated
         ]
 
 

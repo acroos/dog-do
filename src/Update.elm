@@ -2,6 +2,7 @@ module Update exposing (update)
 
 import Char
 import Commands exposing (..)
+import Date exposing (fromString)
 import Json.Decode as Decode
 import Msgs exposing (Msg)
 import Models exposing (..)
@@ -84,7 +85,8 @@ update msg model =
                     model.pendingEvent
                 
                 event =
-                    { eventType = Models.PurchaseEvent
+                    { id = Nothing
+                    , eventType = Models.PurchaseEvent
                     , timestamp = model.now
                     , itemType = itemType
                     , itemName = name
@@ -93,6 +95,48 @@ update msg model =
 
             in
                 ( { model | pendingEvent = emptyPendingEvent }, batchWithTimeCmd <| saveEvent <| event )
+
+        Msgs.EditEvent event ->
+            ( { model | eventToEdit = Just event }, updateNowTime )
+
+        Msgs.UpdateEditedEventName name ->
+            let
+                newEvent = 
+                    Maybe.map (\evt -> { evt | itemName = name }) model.eventToEdit
+            in
+                ( { model | eventToEdit = newEvent }, updateNowTime )
+
+        Msgs.UpdateEditedEventQuantity quantity ->
+            let
+                newEvent =
+                    case (String.toFloat quantity) of
+                        Ok val ->
+                            Maybe.map (\evt -> { evt | quantity = val }) model.eventToEdit
+                        _->
+                            model.eventToEdit
+            in
+                ( { model | eventToEdit = newEvent }, updateNowTime )
+            
+        Msgs.UpdateEditedEventTimestamp timestamp ->
+            let
+                newEvent =
+                    case (Date.fromString timestamp) of
+                        Ok val ->
+                            Maybe.map (\evt -> { evt | timestamp = val }) model.eventToEdit
+                        _->
+                            model.eventToEdit
+            in
+                ( { model | eventToEdit = newEvent }, updateNowTime )
+
+        Msgs.SaveEditedEvent ->
+            let
+                cmd = 
+                    case model.eventToEdit of
+                        Just theEvent -> (batchWithTimeCmd (updateEvent theEvent))
+                        Nothing -> updateNowTime
+            in
+
+            ( model, cmd )
 
         Msgs.RetrievedDefaults value ->
             case Decode.decodeValue decodeDefaults value of
@@ -114,6 +158,24 @@ update msg model =
                     ( { model | settings = settings }, updateNowTime )
                 Err err ->
                     ( { model | error = ("RetrievedSettings: " ++ err) }, updateNowTime )
+
+        Msgs.DatabaseEventUpdated value ->
+            let
+                (maybeEvent, errorMessage) =
+                    case Decode.decodeValue decodeEvent value of
+                        Ok event ->
+                            (Just event, "")
+                        Err err ->
+                            (Nothing, err)
+                
+                newEvents =
+                    case maybeEvent of
+                        Just theEvent ->
+                            theEvent :: (List.filter (\i -> i.id /= theEvent.id) model.events)
+                        Nothing ->
+                            model.events
+            in
+                ( { model | events = newEvents, error = errorMessage }, updateNowTime )
 
         Msgs.SettingsUpdateDogName dogName ->
             let
