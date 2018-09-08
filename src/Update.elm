@@ -135,8 +135,7 @@ update msg model =
                         Just theEvent -> (batchWithTimeCmd (updateEvent theEvent))
                         Nothing -> updateNowTime
             in
-
-            ( model, cmd )
+                ( model, cmd )
 
         Msgs.RetrievedDefaults value ->
             case Decode.decodeValue decodeDefaults value of

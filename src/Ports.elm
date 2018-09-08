@@ -11,5 +11,5 @@ port updateEvent : Value -> Cmd msg
 
 port retrievedSettings : (Value -> msg) -> Sub msg
 port retrievedDefaults : (Value -> msg) -> Sub msg
-port retrievedEventFromDatabase : (Value -> msg) -> Sub msg
-port databaseEventUpdated : (Value -> msg) -> Sub msg
+port retrievedNewEvent : (Value -> msg) -> Sub msg
+port retrievedEventUpdate : (Value -> msg) -> Sub msg

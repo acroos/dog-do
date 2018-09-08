@@ -93,6 +93,8 @@ nameInput event =
 quantityInput : Event -> Html Msg
 quantityInput event =
     case event.eventType of
+        Models.AdministerEvent ->
+            empty
         Models.PurchaseEvent ->
             div [ class "form-group" ]
                 [ label [ for "eventQuantity" ] [ text "Quantity:" ]
@@ -104,8 +106,6 @@ quantityInput event =
                     ]
                     []
                 ]
-        Models.AdministerEvent ->
-            empty
 
 dateInput : Event -> Html Msg
 dateInput event =

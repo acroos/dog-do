@@ -10,6 +10,7 @@ module Utils.JsonUtils exposing
 import Date exposing (Date)
 import Json.Decode as Decode
 import Json.Encode exposing (..)
+import Maybe exposing (map, withDefault)
 import Models exposing (..)
 import Utils.DateUtils exposing (toIso8601String)
 
@@ -19,9 +20,8 @@ encodeEvent : Event -> Value
 encodeEvent event =
     let
         idValue =
-            case event.id of
-                Just theId -> (int theId)
-                Nothing -> null
+            Maybe.map int event.id
+            |> Maybe.withDefault null
     in
         object
             [ ("id", idValue)

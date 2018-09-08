@@ -32,7 +32,7 @@ dexieDb.events.orderBy('timestamp').toArray().then((events) => {
         }
         events
             .map(parseEventForElmInterop)
-            .forEach(e => app.ports.retrievedEventFromDatabase.send(e));
+            .forEach(e => app.ports.retrievedNewEvent.send(e));
 });
 
 app.ports.saveEvent.subscribe((event) => {
@@ -51,7 +51,7 @@ app.ports.saveEvent.subscribe((event) => {
     delete newEvent.id;
 
     dexieDb.events.add(newEvent).then((id) => {
-        app.ports.retrievedEventFromDatabase.send(parseEventForElmInterop(event, id));
+        app.ports.retrievedNewEvent.send(parseEventForElmInterop(event, id));
     });
 });
 
@@ -80,7 +80,7 @@ app.ports.updateEvent.subscribe((event) => {
 
     dexieDb.events.update(event.id, newEvent).then((updated) => {
         if (updated) {
-            app.ports.databaseEventUpdated.send(parseEventForElmInterop(newEvent, newEvent.id));
+            app.ports.retrievedEventUpdate.send(parseEventForElmInterop(newEvent));
         }
     });
 });
@@ -89,6 +89,6 @@ const parseEventForElmInterop = (event, id) => {
     var newEvent = Object.assign({}, event);
     var isoDate = new Date(event.timestamp).toISOString();
     newEvent.timestamp = isoDate;
-    newEvent.id = id;
+    newEvent.id = newEvent.id || id;
     return newEvent;
 };

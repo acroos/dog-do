@@ -44,7 +44,7 @@ toMMDDYYYY : Date -> String
 toMMDDYYYY date =
     let
         dateArray =
-            [toString <| Date.year <| date
+            [ toString <| Date.year <| date
             , zeroPadInt2 <| extractMonthNum <| date
             , zeroPadInt2 <| Date.day <| date
             ]
