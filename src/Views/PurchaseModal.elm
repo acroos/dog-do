@@ -92,6 +92,7 @@ modalBody event =
                         , class "form-check-input"
                         , id "saveAsDefault"
                         , onClick Msgs.UpdatePendingEventSaveAsDefault
+                        , checked event.saveAsDefaults
                         ] []
                     , label [ for "saveAsDefault", class "form-check-label" ] 
                         [ text "Save as default?" ]
