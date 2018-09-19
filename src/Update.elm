@@ -24,6 +24,7 @@ update msg model =
                         { name = maybeName
                         , quantity = maybeQuantity
                         }
+                    , saveAsDefaults = False
                     }
             in
                 ( { model | pendingEvent = pendingEvent }, updateNowTime )
@@ -57,7 +58,7 @@ update msg model =
                 newPendingEvent = 
                     { oldPendingEvent | editableData = newPendingEventData }
 
-            in                
+            in
                 ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.UpdatePendingEventQuantity quantityString ->
@@ -76,7 +77,14 @@ update msg model =
                     { oldPendingEventData | quantity = newQuantity }
                 newPendingEvent = 
                     { oldPendingEvent | editableData = newPendingEventData }
-            in                
+            in
+                ( { model | pendingEvent = newPendingEvent }, updateNowTime )
+
+        Msgs.UpdatePendingEventSaveAsDefault ->
+            let
+                oldPendingEvent = model.pendingEvent
+                newPendingEvent = { oldPendingEvent | saveAsDefaults = not oldPendingEvent.saveAsDefaults }
+            in
                 ( { model | pendingEvent = newPendingEvent }, updateNowTime )
 
         Msgs.SavePendingEvent itemType name quantity ->
@@ -92,9 +100,33 @@ update msg model =
                     , itemName = name
                     , quantity = quantity
                     }
+                
+                saveEventCmd =
+                    (saveEvent event)
 
+                default =
+                    fetchDefaultPurchase model itemType
+
+                updatedDefault =
+                    { default | name = Just name, quantity = Just quantity }
+
+                oldDefaults = 
+                    model.defaultPurchases
+
+                newDefaults =
+                    updateDefaults oldDefaults itemType updatedDefault
+                
+                saveDefaultsCmd =
+                    if oldPendingEvent.saveAsDefaults then
+                        (saveDefaults newDefaults)
+                    else
+                        Cmd.none
+
+                batchedCmd = Cmd.batch [saveEventCmd, saveDefaultsCmd]
             in
-                ( { model | pendingEvent = emptyPendingEvent }, batchWithTimeCmd <| saveEvent <| event )
+                ( { model | pendingEvent = emptyPendingEvent, defaultPurchases = newDefaults }
+                , (batchWithTimeCmd batchedCmd)
+                )
 
         Msgs.EditEvent event ->
             ( { model | eventToEdit = Just event }, updateNowTime )

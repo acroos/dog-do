@@ -64,31 +64,40 @@ modalBody event =
                 Nothing ->
                     placeholder "1.0"
     in
-
-    div [ class "modal-body" ]
-        [ Html.form [ class "text-left px-3" ]
-            [ div [ class "form-group" ]
-                [ label [ for "itemName" ] [ text ((maybeItemTypeToString event.itemType) ++ " Name:") ]
-                , input 
-                    [ type_ "text"
-                    , class "form-control"
-                    , nameValueOrPlaceholder
-                    , id "itemName"
-                    , onInput Msgs.UpdatePendingEventItemName
-                    ] []
-                ]
-            , div [ class "form-group" ]
-                [ label [ for "itemQuantity" ] [ text "Quantity:"]
-                , input
-                    [ type_ "text"
-                    , class "form-control"
-                    , quantityValueOrPlaceholder
-                    , id "itemQuantity"
-                    , onFocusOut Msgs.UpdatePendingEventQuantity
-                    ] []
+        div [ class "modal-body" ]
+            [ Html.form [ class "text-left px-3" ]
+                [ div [ class "form-group" ]
+                    [ label [ for "itemName" ] [ text ((maybeItemTypeToString event.itemType) ++ " Name:") ]
+                    , input 
+                        [ type_ "text"
+                        , class "form-control"
+                        , nameValueOrPlaceholder
+                        , id "itemName"
+                        , onInput Msgs.UpdatePendingEventItemName
+                        ] []
+                    ]
+                , div [ class "form-group" ]
+                    [ label [ for "itemQuantity" ] [ text "Quantity:"]
+                    , input
+                        [ type_ "text"
+                        , class "form-control"
+                        , quantityValueOrPlaceholder
+                        , id "itemQuantity"
+                        , onFocusOut Msgs.UpdatePendingEventQuantity
+                        ] []
+                    ]
+                , div [ class "form-check" ]
+                    [ input
+                        [ type_ "checkbox"
+                        , class "form-check-input"
+                        , id "saveAsDefault"
+                        , onClick Msgs.UpdatePendingEventSaveAsDefault
+                        ] []
+                    , label [ for "saveAsDefault", class "form-check-label" ] 
+                        [ text "Save as default?" ]
+                    ]
                 ]
             ]
-        ]
 
 modalFooter : PendingEvent -> Html Msg
 modalFooter event =

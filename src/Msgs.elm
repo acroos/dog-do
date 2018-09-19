@@ -12,6 +12,7 @@ type Msg
     | UpdatePendingEventItemType ItemType
     | UpdatePendingEventItemName String
     | UpdatePendingEventQuantity String
+    | UpdatePendingEventSaveAsDefault
     | SavePendingEvent ItemType String Float
     | EditEvent Event
     | UpdateEditedEventName String

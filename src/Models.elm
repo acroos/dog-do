@@ -48,6 +48,7 @@ type alias Event =
 type alias PendingEvent =
     { itemType : Maybe ItemType
     , editableData : EditableEventData
+    , saveAsDefaults : Bool
     }
 
 type alias Defaults =
@@ -115,7 +116,10 @@ emptyDefaults =
 
 emptyPendingEvent : PendingEvent
 emptyPendingEvent =
-    { itemType = Nothing, editableData = emptyEditableEventData }
+    { itemType = Nothing
+    , editableData = emptyEditableEventData
+    , saveAsDefaults = False
+    }
 
 emptyEditableEventData : EditableEventData
 emptyEditableEventData =
